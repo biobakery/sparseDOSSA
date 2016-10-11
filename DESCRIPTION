@@ -13,7 +13,8 @@ VignetteBuilder: knitr
 Suggests:
     knitr,
     BiocStyle,
-    BiocGenerics
+    BiocGenerics,
+    rmarkdown
 Imports:
     optparse,
     tmvtnorm (>= 1.4.10)
