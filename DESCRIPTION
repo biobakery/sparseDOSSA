@@ -1,0 +1,21 @@
+Package: sparseDOSSA
+Type: Package
+Title: Sparse Data Observations for Simulating Synthetic Abundance
+Version: 0.99.0
+Date: 2016-10-10
+Author: Boyu Ren<bor158@mail.harvard.edu>, Emma Schwager<emma.schwager@gmail.com>, Timothy Tickle<ttickle@hsph.harvard.edu>, Curtis Huttenhower
+    <chuttenh@hsph.harvard.edu>
+Maintainer: Boyu Ren<bor158@mail.harvard.edu>, Emma Schwager
+    <emma.schwager@gmail.com>, George Weingart<george.weingart@gmail.com>
+Description: The package is to provdie a model based way to generate sparse data observations to simulate synthetic microbial abundance.
+License: MIT + file LICENSE
+VignetteBuilder: knitr
+Suggests:
+    knitr,
+    BiocStyle,
+    BiocGenerics
+Imports:
+    optparse,
+    tmvtnorm (>= 1.4.10)
+biocViews: Bayesian, Metagenomics, Software
+RoxygenNote: 5.0.1
