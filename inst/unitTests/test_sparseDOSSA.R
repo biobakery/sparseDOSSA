@@ -1,12 +1,7 @@
 library(testthat)
 library(sparseDOSSA)
 
-
-
-setwd("..") 
- 
-
-expected_sparsedossa_results <- read.csv("tests/expected_SyntheticMicrobiome.pcl",  row.names=1,header=TRUE,sep="\t")
+expected_sparsedossa_results <- read.csv( system.file(package="sparseDOSSA", "unitTests", "expected_SyntheticMicrobiome.pcl"), row.names=1,header=TRUE,sep="\t" )
 
 sparseDOSSA (
 	bugs_to_spike = 0,
