@@ -1,13 +1,9 @@
-Sparse Data Observations for the Simulation of Synthetic Abundances (SparseDOSSA)
+Sparse Data Observations for the Simulation of Synthetic Abundances (sparseDOSSA)
 ================
 Boyu Ren
-2016-10-10
+2016-10-31
 
 -   [Introduction](#introduction)
--   [How To Install](#how-to-install)
-    -   [From Within R](#from-within-r)
-    -   [From Bitbucket (Compressed File)](#from-bitbucket-compressed-file)
-    -   [From Bitbucket (Directly)](#from-bitbucket-directly)
 -   [How To Run](#how-to-run)
     -   [Loading](#loading)
     -   [Package Features](#package-features)
@@ -17,7 +13,7 @@ Boyu Ren
     -   [Microbe-Metadata correlation](#microbe-metadata-correlation)
     -   [Microbe-Microbe correlation](#microbe-microbe-correlation)
     -   [Output Control](#output-control)
--   [Several applications of SparseDOSSA](#several-applications-of-sparsedossa)
+-   [Several applications of sparseDOSSA](#several-applications-of-sparsedossa)
     -   [Simulated community without correlations](#simulated-community-without-correlations)
     -   [Simulated community with microbe-metadata correlation and microbe-microbe correlation](#simulated-community-with-microbe-metadata-correlation-and-microbe-microbe-correlation)
     -   [Benchmarking metagenomeSeq](#benchmarking-metagenomeseq)
@@ -27,46 +23,11 @@ Boyu Ren
 Introduction
 ------------
 
-Metagenomic sequencing provides a practical and broadly applicable means for describing host- and environmentally-associated microbial communities. Several statistical methods have been developed to facilitate analysis of community profiles, but due to the complex nature of typical microbiome measurements (e.g. sparse, zero-inflated sequence counts or compositions) and of the associated underlying biology, it is typically difficult to compare, benchmark, or evaluate these methods within a single systematic framework. To address this challenge, we present SparseDOSSA (Sparse Data Observations for the Simulation of Synthetic Abundances): a Bayesian hierarchical model of microbial ecological population structure.
+Metagenomic sequencing provides a practical and broadly applicable means for describing host- and environmentally-associated microbial communities. Several statistical methods have been developed to facilitate analysis of community profiles, but due to the complex nature of typical microbiome measurements (e.g. sparse, zero-inflated sequence counts or compositions) and of the associated underlying biology, it is typically difficult to compare, benchmark, or evaluate these methods within a single systematic framework. To address this challenge, we present sparseDOSSA (Sparse Data Observations for the Simulation of Synthetic Abundances): a Bayesian hierarchical model of microbial ecological population structure.
 
-SparseDOSSA's model captures the marginal distribution of each microbial feature as a truncated, zero-inflated log-normal distribution, with parameters distributed as a parent log-normal distribution. The model can be effectively fit to reference microbial datasets in order to parameterize their microbes and communities, or to simulate synthetic datasets of similar population structure. Most importantly, it allows users to include both known feature-feature and feature-metadata correlation structures and thus provides a gold standard to enable benchmarking of statistical methods for metagenomic data analysis.
+sparseDOSSA's model captures the marginal distribution of each microbial feature as a truncated, zero-inflated log-normal distribution, with parameters distributed as a parent log-normal distribution. The model can be effectively fit to reference microbial datasets in order to parameterize their microbes and communities, or to simulate synthetic datasets of similar population structure. Most importantly, it allows users to include both known feature-feature and feature-metadata correlation structures and thus provides a gold standard to enable benchmarking of statistical methods for metagenomic data analysis.
 
-How To Install
---------------
-
-There are three options for installing SparseDOSSA:
-
--   Within R
--   Using compressed file from BitBucket
--   Directly from BitBucket
-
-### From Within R
-
-**This is not yet available**
-
-### From Bitbucket (Compressed File)
-
-**This is not yet available**
-
-### From Bitbucket (Directly)
-
-Clone the repository using `git clone`, which downloads the package as its own directory called `sparseDOSSA`.
-
-``` bash
-git clone https://<your-user-name>@bitbucket.org/biobakery/sparsedossa.git
-```
-
-Then, install SparseDOSSA's dependencies. If these are already installed on your machine, this step can be skipped.
-
-``` bash
-Rscript -e "install.packages(c('optparse', 'tmvtnorm'))"
-```
-
-Lastly, in the same directory where the folder `sparseDOSSA` is located, install SparseDOSSA using `R CMD INSTALL`. Note that this *will not* automatically install the dependencies, so they must be installed first.
-
-``` bash
-R CMD INSTALL sparseDOSSA
-```
+The output of sparseDOSSA can be used to help researchers decide which statistical package in Bioconductor for metagenomic data analysis is the most accruate and appropriate tool for their purpose. They can use the gold-standard information to evaluate objectively the performance of statistical frameworks. As an example, in the later section about applications of sparseDOSSA, we tried to replicate the benchmark results of Bioconductor package `metagenomeSeq` in its orginal paper (Paulson et al. 2013) and confirmed the optimal performance of its cummulative sum scaling method comparing to other normalization methods in terms of detecting a binary clustering structure in the data.
 
 How To Run
 ----------
@@ -81,9 +42,9 @@ library(sparseDOSSA)
 
 ### Package Features
 
-The SparseDOSSA package contains a single function:
+The sparseDOSSA package contains a single function:
 
--   `sparseDOSSA`, a wrapper for running all functionality of SparseDOSSA.
+-   `sparseDOSSA`, a wrapper for running all functionality of sparseDOSSA.
 
 ### Data and Prior Input
 
@@ -95,7 +56,7 @@ For a full and complete description of the possible parameters for `sparseDOSSA`
 
 #### Required Input
 
-There is no required input for running SparseDOSSA. By default, SparseDOSSA will produce a single microbial community data with 20 randomly generated metadata and no microbe-metadata correlation or microbe-microbe correlation. There will be 300 microbes and 50 samples and the read-depth for each sample is 8030. The template for this dataset is the PRISM dataset (Morgan et al. 2012). The sample code is as following:
+There is no required input for running sparseDOSSA. By default, sparseDOSSA will produce a single microbial community data with 20 randomly generated metadata and no microbe-metadata correlation or microbe-microbe correlation. There will be 300 microbes and 50 samples and the read-depth for each sample is 8030. The template for this dataset is the PRISM dataset (Morgan et al. 2012). The sample code is as following:
 
 ``` r
 sparseDOSSA::sparseDOSSA()
@@ -106,7 +67,7 @@ sparseDOSSA::sparseDOSSA()
 
 #### Community property parameters
 
-The community property parameters can be specified as input. They are the calibration file (the template microbiome dataset SparseDOSSA will train its model on), the number of microbes, the number of samples, read depth, the number of metadata for each different types, and the number of datasets it generates (only turned on when simulating microbe-microbe associations). If you have your own calibration dataset and would like to simulate data based on it, please follow the example below. Your dataset must be in a QIIME OTU table format, that is taxonomic units in rows and samples in columns, with each cell indicates the observed counts. For example,
+The community property parameters can be specified as input. They are the calibration file (the template microbiome dataset sparseDOSSA will train its model on), the number of microbes, the number of samples, read depth, the number of metadata for each different types, and the number of datasets it generates (only turned on when simulating microbe-microbe associations). If you have your own calibration dataset and would like to simulate data based on it, please follow the example below. Your dataset must be in a QIIME OTU table format, that is taxonomic units in rows and samples in columns, with each cell indicates the observed counts. For example,
 
 ``` r
 n.microbes <- 150
@@ -135,7 +96,7 @@ sparseDOSSA::sparseDOSSA( spikeStrength = "2.0", spikeCount = "2" )
 
 ### Microbe-Microbe correlation
 
-SparseDOSSA can also introduce correlations between microbes. This is acheived through a multivariate-lognormal model considered in [BAnOCC](https://bitbucket.org/biobakery/banocc). A compound symmetric correlation matrix is used to describe the correlation structure for the chosen set of microbes. The options for microbe-microbe correlation structure include the value of off-diagonal elements of the correlation matrix, and a path to the spike file that indicates which pairs of microbes are correlated (alternatively, you can only specify how many microbes are inter-correlated and those microbes will be chosen randomly). Most importantly, if you want to simulate community with microbe-microbe correlations, you need to set the flag `runBugBug` to TRUE.
+sparseDOSSA can also introduce correlations between microbes. This is acheived through a multivariate-lognormal model considered in [BAnOCC](https://bitbucket.org/biobakery/banocc). A compound symmetric correlation matrix is used to describe the correlation structure for the chosen set of microbes. The options for microbe-microbe correlation structure include the value of off-diagonal elements of the correlation matrix, and a path to the spike file that indicates which pairs of microbes are correlated (alternatively, you can only specify how many microbes are inter-correlated and those microbes will be chosen randomly). Most importantly, if you want to simulate community with microbe-microbe correlations, you need to set the flag `runBugBug` to TRUE.
 
 ``` r
 sparseDOSSA::sparseDOSSA( runBugBug = TRUE, bugBugCorr = "0.2", bugs_to_spike = 5 )
@@ -143,7 +104,7 @@ sparseDOSSA::sparseDOSSA( runBugBug = TRUE, bugBugCorr = "0.2", bugs_to_spike = 
 
 ### Output Control
 
-For each simulation using default model parameters, SparseDOSSA will produce three txt files: `SyntheticMicrobiome.pcl`, `SyntheticMicrobiome-Counts.pcl`, `SyntheticMicrobiomeParameterFile.txt`. The first two files contain the actual microbiome abundance data and the third file records values of model parameters, diagnostic information and spike-in assignment. You can specify the names of these files as well as the directory you want to put them to.
+For each simulation using default model parameters, sparseDOSSA will produce three txt files: `SyntheticMicrobiome.pcl`, `SyntheticMicrobiome-Counts.pcl`, `SyntheticMicrobiomeParameterFile.txt`. The first two files contain the actual microbiome abundance data and the third file records values of model parameters, diagnostic information and spike-in assignment. You can specify the names of these files as well as the directory you want to put them to.
 
 ``` r
 sparseDOSSA::sparseDOSSA( strNormalizedFileName = "my_Microbiome.pcl",
@@ -155,12 +116,12 @@ sparseDOSSA::sparseDOSSA( strNormalizedFileName = "my_Microbiome.pcl",
     ## "my_Microbiome.pcl", : number of associations = 0, and no spike file
     ## specified; no bug-bug spike-ins will be done.
 
-Several applications of SparseDOSSA
+Several applications of sparseDOSSA
 -----------------------------------
 
 ### Simulated community without correlations
 
-SparseDOSSA's hierarchical model is calibrated using the [PRISM dataset](https://www.dropbox.com/s/akgv0bv8bbpzcqo/prism.tsv?dl=0) by default. Here is a basic example of simulating dataset with 150 features (microbes), 180 samples and 10 metadata for each type (binary, quaternary and continuous), without any correlation structure. We use the default values for other model parameters:
+sparseDOSSA's hierarchical model is calibrated using the [PRISM dataset](https://www.dropbox.com/s/akgv0bv8bbpzcqo/prism.tsv?dl=0) by default. Here is a basic example of simulating dataset with 150 features (microbes), 180 samples and 10 metadata for each type (binary, quaternary and continuous), without any correlation structure. We use the default values for other model parameters:
 
 ``` r
 n.microbes <- 150
@@ -220,7 +181,7 @@ The results can be found [here](https://www.dropbox.com/s/r36pws7udpamwqp/third_
 
 ### Benchmarking metagenomeSeq
 
-As an final example to show sparseDOSSA can replicate results in previous literature, we choose to benckmark CSS normalization introduced in metagenomeSeq (Paulson et al. 2013). We use their testing dataset to calibrate our model and introduce binary association to emulate the cluster structure present in the original dataset. In the paper, they ran their model on a dataset published in a diet study for mice (Turnbaugh et al. 2009). The mice dataset can be found [here](https://www.dropbox.com/s/e1jlinzqnkyyrh5/mouse_raw.pcl?dl=0). Assume the data file is \(mice.txt\), the code we run to get the synthetic data with known differential abundance profile is
+As an final example to show sparseDOSSA can replicate results in previous literature, we choose to benckmark CSS normalization introduced in metagenomeSeq (Paulson et al. 2013). We use their testing dataset to calibrate our model and introduce binary association to emulate the cluster structure present in the original dataset. In the paper, they ran their model on a dataset published in a diet study for mice (Turnbaugh et al. 2009). The mice dataset can be found [here](https://www.dropbox.com/s/e1jlinzqnkyyrh5/mouse_raw.pcl?dl=0). Assume the data file is *m**i**c**e*.*t**x**t*, the code we run to get the synthetic data with known differential abundance profile is
 
 ``` r
 sparseDOSSA::sparseDOSSA( calibrate = "mice.txt", number_metadata = 1, percent_spiked = 0.2 )
