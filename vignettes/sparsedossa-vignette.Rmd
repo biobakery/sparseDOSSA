@@ -9,8 +9,7 @@ output:
     toc_depth: 4
 bibliography: SparseDOSSA_Bibliography.bib
 vignette: >
-  %\VignetteIndexEntry{Sparse Data Observations for the Simulation of
-  %Synthetic Abundances (sparseDOSSA)}
+  %\VignetteIndexEntry{Sparse Data Observations for the Simulation of Synthetic Abundances (sparseDOSSA)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
