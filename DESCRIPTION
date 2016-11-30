@@ -3,11 +3,23 @@ Type: Package
 Title: Sparse Data Observations for Simulating Synthetic Abundance
 Version: 0.99.2
 Date: 2016-10-28
-Author: Boyu Ren<bor158@mail.harvard.edu>, Emma Schwager<emma.schwager@gmail.com>, Timothy Tickle<ttickle@hsph.harvard.edu>, Curtis Huttenhower
+Author: Boyu Ren<bor158@mail.harvard.edu>, Emma
+    Schwager<emma.schwager@gmail.com>, Timothy
+    Tickle<ttickle@hsph.harvard.edu>, Curtis Huttenhower
     <chuttenh@hsph.harvard.edu>
 Maintainer: Boyu Ren<bor158@mail.harvard.edu>, Emma Schwager
     <emma.schwager@gmail.com>, George Weingart<george.weingart@gmail.com>
-Description: The package is to provdie a model based way to generate sparse data observations to simulate synthetic microbial abundance.
+Description: The package is to provide a model based Bayesian method to
+    characterize and simulate microbiome data. sparseDOSSA's model captures the
+    marginal distribution of each microbial feature as a truncated,
+    zero-inflated log-normal distribution, with parameters distributed as a
+    parent log-normal distribution. The model can be effectively fit to
+    reference microbial datasets in order to parameterize their microbes and
+    communities, or to simulate synthetic datasets of similar population
+    structure. Most importantly, it allows users to include both known
+    feature-feature and feature-metadata correlation structures and thus
+    provides a gold standard to enable benchmarking of statistical methods for
+    metagenomic data analysis.
 License: MIT + file LICENSE
 VignetteBuilder: knitr
 Suggests:
@@ -16,7 +28,11 @@ Suggests:
     BiocGenerics,
     rmarkdown
 Imports:
+    stats,
+    utils,
     optparse,
-    tmvtnorm (>= 1.4.10)
-biocViews: Bayesian, Metagenomics, Software
+    MASS,
+    tmvtnorm (>= 1.4.10),
+    MCMCpack
+biocViews: Bayesian, Microbiome, Metagenomics, Software
 RoxygenNote: 5.0.1

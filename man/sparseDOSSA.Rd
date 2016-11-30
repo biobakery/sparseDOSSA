@@ -113,11 +113,14 @@ sparseDOSSA( strNormalizedFileName = "SyntheticMicrobiome.pcl",
 }
 
 \value{
-Invisible `NULL`.
+A list contains the names of the output files. There are three fields in the list: "pcl_counts" is the file name of the synthetic microbial abundance count matrix; "pcl_normalized" is the file name of the normalized synthetic microbial abundance matrix; "truth_file" is the file name of the ground truth file.
 }
 
 \author{
-Boyu Ren<bor158@mail.harvard.edu>, Emma Schwager<eschwager@hsph.harvard.edu>,Timothy Tickle<ttickle@hsph.harvard.edu>,Curtis Huttenhower <chuttenh@hsph.harvard.edu>
+Boyu Ren<bor158@mail.harvard.edu>, 
+Emma Schwager<eschwager@hsph.harvard.edu>,
+Timothy Tickle<ttickle@hsph.harvard.edu>,
+Curtis Huttenhower <chuttenh@hsph.harvard.edu>
 }
 \examples{
  

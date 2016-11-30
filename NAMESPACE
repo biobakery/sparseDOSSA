@@ -1,3 +1,7 @@
 export(sparseDOSSA)
 import(tmvtnorm)
 import(optparse)
+import(MASS)
+importFrom("stats", "binomial", "coef", "glm", "lm", "rbinom", "rnorm", "runif", "sd")
+importFrom("utils", "read.table", "write.table")
+importFrom("MCMCpack", "rdirichlet")
