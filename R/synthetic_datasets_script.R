@@ -25,7 +25,9 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                        association_type =  "linear",
                        noZeroInflate =  FALSE,
                        noRunMetadata = FALSE,
-                       runBugBug =  FALSE) {
+                       runBugBug =  FALSE,
+                       UserMetadata = NA,
+                       Metadatafrozenidx = NA) {
   int_base_metadata_number = number_metadata
   if (int_base_metadata_number < 1)
     stop("Please provide the base number for metadata generation as 1 or greater.")
@@ -150,7 +152,6 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     )
   }
   
-  
   mtrxSpikeConfig = cbind(vdSpikeCount, vdSpikeStrength)
   
   fVerbose     = verbose
@@ -178,10 +179,19 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
   number_metadata = 0
   
   if (fRunMetadata) {
-    # generate the metadata
-    lsMetadataInfo = func_generate_metadata(int_base_metadata_number,
-                                            int_number_samples,
-                                            dMinLevelCountPercent)
+    # get the data from user-provide metadata file
+    # should be tab-delimited
+    # with row names at the first column
+    
+    if( !is.na(UserMetadata) ){
+      lsMetadataInfo = list( mat_metadata = UserMetadata,
+                             mtrxParameters = as.list( c( c_str$MetadataDetails, "User-provide metadata", 
+                                                          paste(c_str$Metadata, 1:nrow(UserMetadata), sep="")) ) )
+    }else{
+      lsMetadataInfo = func_generate_metadata(int_base_metadata_number,
+                                              int_number_samples,
+                                              dMinLevelCountPercent)
+    }
     mat_metadata =  lsMetadataInfo[["mat_metadata"]]
     metadata_parameters = lsMetadataInfo[["mtrxParameters"]]
     
@@ -306,6 +316,11 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     lliMetadata = vector('list', length = nrow(mtrxSpikeConfig))
     lliData = vector('list', length = nrow(mtrxSpikeConfig))
     
+    if( !is.na(Metadatafrozenidx) ){
+      lliMetadata[[as.character(length(Metadatafrozenidx))]] = Metadatafrozenidx
+    }
+    
+    
     # Generate random lognormal with varying amounts of spikes
     for (iIndex in seq_len(nrow(mtrxSpikeConfig)))
     {
@@ -317,11 +332,11 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
       liData = NULL
       lviMetadata = NULL
       
-      if (sKey %in% names(llsLevels))
+      if (sKey %in% names(lliMetadata))
       {
         lsLevels = llsLevels[[sKey]]
         liData = lliData[[sKey]]
-        lviMetadata = lliMetadata[[sKey]]
+        viMetadata = lliMetadata[[sKey]]
       }
       
       mat_random_lognormal_multivariate_spikes = func_generate_random_lognormal_with_multivariate_spikes(
@@ -334,7 +349,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
         dMinLevelCountPercent   = dMinLevelCountPercent,
         mtrxBugs                = mat_random_lognormal_bugs[["mat_bugs"]],
         fZeroInflated           = fZeroInflate,
-        lviFrozeMetadataIndices = lviMetadata,
+        viFrozeMetadataIndices  = viMetadata,
         liFrozeDataIndicies     = liData,
         lsFrozeLevels           = lsLevels,
         fVerbose                = fVerbose
@@ -562,27 +577,30 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
   
   final_matrix = matrix(
     data = NA,
-    nrow = (number_metadata + int_number_features * length(list_of_bugs)) +
+    nrow = (nrow(mat_metadata) + int_number_features * length(list_of_bugs)) +
       1,
     ncol = (int_number_samples + 1)
   )
   final_matrix[1, 1] = '#SampleID'
   final_matrix[1, 2:(int_number_samples + 1)] = paste('Sample', 1:int_number_samples, sep =
                                                         '')
-  if (number_metadata > 0) {
+  if (number_metadata > 0 & is.na(UserMetadata) ) {
     final_matrix[2:(number_metadata + 1), 1] = paste(c_str$Metadata, 1:number_metadata, sep =
                                                        '')
     vdDim = dim(mat_metadata)
     mat_metadata[(floor(vdDim[1] / 2) + 1):vdDim[1], ] = paste("Group_", mat_metadata[(floor(vdDim[1] /
                                                                                                2) + 1):vdDim[1], ], sep = "")
     final_matrix[2:(number_metadata + 1), 2:(int_number_samples + 1)] = mat_metadata
+  }else{
+    final_matrix[2:(nrow(mat_metadata)+1),1] = paste( c_str$Metadata, 1:nrow(mat_metadata), sep = "" )
+    final_matrix[2:(nrow(mat_metadata)+1),2:(int_number_samples+1)] = mat_metadata
   }
   
   # Make a matrix for counts (use the other for normalized)
   mtrxFinalCounts = final_matrix
   
-  start = 2 + number_metadata
-  end = (2 + number_metadata) + (int_number_features - 1)
+  start = 2 + nrow(mat_metadata)
+  end = (2 + nrow(mat_metadata)) + (int_number_features - 1)
   iFirstData = start
   
   for (iMatIndex in seq_along(list_of_bugs))

@@ -32,7 +32,9 @@ sparseDOSSA( strNormalizedFileName = "SyntheticMicrobiome.pcl",
              association_type =  "linear",
              noZeroInflate =  FALSE,
              noRunMetadata = FALSE, 
-             runBugBug =  FALSE )
+             runBugBug =  FALSE,
+             UserMetadata = NA,
+             Metadatafrozenidx = NA )
 }
 \arguments{
   \item{strNormalizedFileName}{
@@ -110,6 +112,10 @@ sparseDOSSA( strNormalizedFileName = "SyntheticMicrobiome.pcl",
  }
   \item{runBugBug}{
   If given, bug-bug interaction files are generated in addition to any metadata files. This is a flag, it is either included or not included in the command line, no value needed.}
+  \item{UserMetadata}{
+  If given, it should be a numeric matrix containing metadata information. Notice discrete variable should be first converged into dummy variables. Default is to generate metadata matrix randomly.}
+  \item{Metadatafrozenidx}{
+  If given, it should be a vector of integers. It contains the row indices of metadata matrix that will be used in all metadata spike-in. The length of this vector should be equal to \code{spikeCount}.}
 }
 
 \value{

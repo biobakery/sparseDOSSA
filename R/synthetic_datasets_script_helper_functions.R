@@ -847,7 +847,7 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
   ### Random log normal matrix
   fZeroInflated,
   ### True indicates it is a zero inflated model.
-  lviFrozeMetadataIndices = NULL,
+  viFrozeMetadataIndices = NULL,
   ### If given, the method must select these specific metadata indicies.
   ### This allow selection of features to be the same when evaluating the multiplier
   liFrozeDataIndicies = NULL,
@@ -950,7 +950,7 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
         # This is so if multiple multipliers are given
         # The different matrices show the differences given increased size of effect
         # Not difference driven by selecting different bugs
-        if(!is.null(liFrozeDataIndicies) & length(lviFrozeMetadataIndices)>0)
+        if(!is.null(liFrozeDataIndicies) & length(liFrozeDataIndicies)>0)
         {
           iIndexSpikedFeature = liFrozeDataIndicies[[iSpikedBug]]
         } else {
@@ -958,9 +958,9 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
         }
         
         # Select which of the metadatum we will be using to scale
-        if(!is.null(lviFrozeMetadataIndices) & length(lviFrozeMetadataIndices)>0)
+        if(!is.null(viFrozeMetadataIndices) & length(viFrozeMetadataIndices)>0)
         {
-          viSelectedMetadata = lviFrozeMetadataIndices[[iSpikedBug]]
+          viSelectedMetadata = viFrozeMetadataIndices
         } else {
           viSelectedMetadata = funcSample( seq_len(nrow( metadata_matrix )), multivariate_parameter, replace = FALSE )
         }
