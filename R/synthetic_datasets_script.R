@@ -27,7 +27,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                        noRunMetadata = FALSE,
                        runBugBug =  FALSE,
                        UserMetadata = NA,
-                       Metadatafrozenidx = NA) {
+                       Metadatafrozenidx = NA ) {
   int_base_metadata_number = number_metadata
   if (int_base_metadata_number < 1)
     stop("Please provide the base number for metadata generation as 1 or greater.")
@@ -330,7 +330,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
       iSpikeStrength = vMultConfig[2]
       lsLevels = NULL
       liData = NULL
-      lviMetadata = NULL
+      viMetadata = NULL
       
       if (sKey %in% names(lliMetadata))
       {
