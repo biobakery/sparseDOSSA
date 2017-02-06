@@ -1616,6 +1616,12 @@ funcTruncatedRLNorm = function(
     viThreshold <- rep(Inf, length(vdLogSD))
   }
   
+  if(prod(diag(mdLogVar))==0){
+    ttt = diag(mdLogVar)
+    ttt[ttt==min(ttt)] = min(ttt) + 1
+    diag(mdLogVar) = ttt
+  }
+  
   mdFeature <- exp(tmvtnorm::rtmvnorm(n=iNumberMeasurements,
                                       mean = vdLogMean,
                                       sigma = mdLogVar,
