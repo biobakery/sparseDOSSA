@@ -17,15 +17,16 @@ c_d <- list(
   MaxBinary = .7,
   ### Min and max probabilities for binary metadata levels
   ALittleMoreThanZero = 0.00001,
-  SDBeta = 0.1251,
-  SDIntercept = 1.121,
+  SDBeta = 0.5599,
+  SDIntercept = -0.2691,
   ### The estimate for the relationship between SD and exp
-  BetaZero = -0.6197338,
+  BetaZero = -2.577,
   #Beta2Zero = -0.0111924
-  InterceptZero = 2.3536094,
+  InterceptZero = 3.464,
   ### The estimate for the relationship between exp and zero percent
   ### modified by bor to logistic regression results on the IBD study
-  BetaGrandSD = 0.04982219
+  BetaGrandSD = 0.4857
+  BetaGrandMu = 0.7513
   ### The estimate for the relationship between the mu of mus (of feature distributions) and the SD of mus (of feature distributions)
 )
 
