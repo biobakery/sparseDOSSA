@@ -586,37 +586,27 @@ func_generate_random_lognormal_matrix = function(
   mat_bugs_basis = matrix(data=NA,nrow=int_number_features,ncol=int_number_samples)
   
   # Get the initial mu vector for generating features.
-  lsInitialDistribution = funcGenerateFeatureParameters(
-    int_number_features = int_number_features,
-    int_number_samples  = int_number_samples,
-    iMinNumberSamples   = iMinNumberSamples,
-    iReadDepth          = iReadDepth,
-    vdExp               = vdExp,
-    vdMu                = vdMu,
-    vdSD                = vdSD,
-    vdPercentZero       = vdPercentZero,
-    lSDRel              = lSDRel,
-    lPercentZeroRel     = lPercentZeroRel,
-    dBetaGrandSD        = dBetaGrandSD,
-    fVerbose            = fVerbose
-  )
+  # lsInitialDistribution = funcGenerateFeatureParameters(
+  #   int_number_features = int_number_features,
+  #   int_number_samples  = int_number_samples,
+  #   iMinNumberSamples   = iMinNumberSamples,
+  #   iReadDepth          = iReadDepth,
+  #   vdExp               = vdExp,
+  #   vdMu                = vdMu,
+  #   vdSD                = vdSD,
+  #   vdPercentZero       = vdPercentZero,
+  #   lSDRel              = lSDRel,
+  #   lPercentZeroRel     = lPercentZeroRel,
+  #   dBetaGrandSD        = dBetaGrandSD,
+  #   fVerbose            = fVerbose
+  # )
   
   # Update the Mu, SD and Percent zero bugs and report on distributions
-  vdMu = lsInitialDistribution[["mu"]]
-  vdSD = lsInitialDistribution[["sd"]]
-  vdPercentZero = lsInitialDistribution[["PercentZero"]]
-  vdExp = lsInitialDistribution[["exp"]]
   
-  # TODO remove
-  if(c_f$FreezeSDFeatures)
-  { 
-    message("Feature SDs are frozen.")
-    if(length(vdSD)>0)
-    {
-      vdMu = rep(iReadDepth/int_number_features, length(vdSD))
-      vdSD = rep(1,length(vdSD))
-    }
-  }
+  vdMu = rlnorm( int_number_features, c_d$BetaGrandMu, c_d$BetaGrandSD )
+  vdSD = exp(c_d$SDIntercept+c_d$SDBeta*log(vdMu))
+  vdPercentZero = 1/(1+exp(-(c_d$InterceptZero+c_d$BetaZero*log(vdMu))))
+  #vdExp = lsInitialDistribution[["exp"]]
   
   # Number of samples needed to have signal as a constraint
   iNumberSamples = min(int_number_samples, iMinNumberSamples)
@@ -638,14 +628,13 @@ func_generate_random_lognormal_matrix = function(
   )
   
   # Need to transpose so that features are rows, columns are samples
-  mat_bugs = t(lFeatureDetails$Feature)
-  mat_bugs_basis = t(lFeatureDetails$Feature_base)
+  mat_bugs_basis = lFeatureDetails$Feature_base
+  mat_bugs = t(t(mat_bugs_basis)/colSums(mat_bugs_basis)*iReadDepth)
   
-  
-  # Shuffle back in removed signal, but only if there are no bug-bug correlations that would be messed up
-  if (all(mdLogCorr[upper.tri(mdLogCorr)] == 0)){
-    mat_bugs = funcShuffleMatrix(mtrxData=mat_bugs, iTargetReadDepth=iReadDepth)
-  }
+  # # Shuffle back in removed signal, but only if there are no bug-bug correlations that would be messed up
+  # if (all(mdLogCorr[upper.tri(mdLogCorr)] == 0)){
+  #   mat_bugs = funcShuffleMatrix(mtrxData=mat_bugs, iTargetReadDepth=iReadDepth)
+  # }
   
   # Round to counts
   # This round method does not allow value produced lower then the minimal value 
@@ -1179,7 +1168,7 @@ funcMakeFeature = function(
   ### Minimum number of samples needed to have signal. If this is not fulfilled, signal will be generated and added.
   mdLogCorr = diag(length(vdSD)),
   ### The correlation matrix of the logged distribution; default is a identity matrix with dimension length(vdLogSD)
-  vdTruncateThreshold = NA,
+  vdTruncateThreshold = rep(Inf, length(vdSD)),
   ### Threshold to truncate the underlying distribution
   fZeroInflate = TRUE,
   ### If the feature should be zero inflated
@@ -1197,23 +1186,29 @@ funcMakeFeature = function(
   vdExpCal = sapply(seq_along(vdMu), function(i) funcGetExp(vdMu[i],vdSD[i]))
   
   # Generate features
-  mdFeature_base = func_zero_inflate(vdLogMean = log(vdMu), vdPercentZeroInflated=vdPercentZero, int_number_samples=iNumberSamples, vdLogSD=log(vdSD), mdLogCorr=mdLogCorr, viThreshold=vdTruncateThreshold)
-  
+  #mdFeature_base = func_zero_inflate(vdLogMean = log(vdMu), vdPercentZeroInflated=vdPercentZero, int_number_samples=iNumberSamples, vdLogSD=log(vdSD), mdLogCorr=mdLogCorr, viThreshold=vdTruncateThreshold)
+  mdFeature_base = t(exp(tmvtnorm::rtmvnorm( iNumberSamples, vdMu, 
+                                       sigma = diag(vdSD)%*%mdLogCorr%*%diag(vdSD), 
+                                       upper = log(vdTruncateThreshold), algorithm = "gibbs" )))
+  mdFeature_base = mdFeature_base * t(sapply( 1:length(vdPercentZero), 
+                                           function(x) sample( 0:1, iNumberSamples, replace = T, 
+                                                               prob = c(vdPercentZero[x],1-vdPercentZero[x]) 
+                                                               )))
+    
   # Update the distributions to the targeted expectations
-  mdFeature = matrix(NA, ncol=ncol(mdFeature_base), nrow=nrow(mdFeature_base))
-  for (k in seq_len(ncol(mdFeature))){
-    mdFeature[, k] = funcUpdateDistributionToExpectation(vdFeatures=mdFeature_base[, k], dExp = vdExpCal[k] )
-  }
+  # mdFeature = matrix(NA, ncol=ncol(mdFeature_base), nrow=nrow(mdFeature_base))
+  # for (k in seq_len(ncol(mdFeature))){
+  #   mdFeature[, k] = funcUpdateDistributionToExpectation(vdFeatures=mdFeature_base[, k], dExp = vdExpCal[k] )
+  # }
   
   # Causes striation, update
-  mdFeature = apply(mdFeature, 2, funcForceMinCountsInMinSamples, iMinNumberCounts = iMinNumberCounts, iMinNumberSamples = iMinNumberSamples)
-  mdFeature_base = apply(mdFeature_base, 2, funcForceMinCountsInMinSamples, iMinNumberCounts = iMinNumberCounts, iMinNumberSamples = iMinNumberSamples )
-  
+  # mdFeature = apply(mdFeature, 2, funcForceMinCountsInMinSamples, iMinNumberCounts = iMinNumberCounts, iMinNumberSamples = iMinNumberSamples)
+  # mdFeature_base = apply(mdFeature_base, 2, funcForceMinCountsInMinSamples, iMinNumberCounts = iMinNumberCounts, iMinNumberSamples = iMinNumberSamples )
   # Extra useful measurements, the true and expected means
-  vdMean = apply(mdFeature, 2, mean)
+  vdMean = apply(mdFeature_base, 2, mean)
   vdMean_base = apply(mdFeature_base, 2, mean)
   
-  return(list(Feature = mdFeature, Feature_base = mdFeature_base, Exp=vdMean, ExpCal = vdExpCal, Exp_base = vdMean))
+  return(list(Feature = mdFeature_base, Feature_base = mdFeature_base, Exp=vdMean, ExpCal = vdExpCal, Exp_base = vdMean))
 }
 
 

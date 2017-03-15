@@ -183,14 +183,14 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     # should be tab-delimited
     # with row names at the first column
     
-    if( !is.na(UserMetadata) ){
-      lsMetadataInfo = list( mat_metadata = UserMetadata,
-                             mtrxParameters = as.list( c( c_str$MetadataDetails, "User-provide metadata", 
-                                                          paste(c_str$Metadata, 1:nrow(UserMetadata), sep="")) ) )
-    }else{
+    if( all(is.na(UserMetadata)) ){
       lsMetadataInfo = func_generate_metadata(int_base_metadata_number,
                                               int_number_samples,
                                               dMinLevelCountPercent)
+    }else{
+      lsMetadataInfo = list( mat_metadata = UserMetadata,
+                             mtrxParameters = as.list( c( c_str$MetadataDetails, "User-provide metadata", 
+                                                          paste(c_str$Metadata, 1:nrow(UserMetadata), sep="")) ) )
     }
     mat_metadata =  lsMetadataInfo[["mat_metadata"]]
     metadata_parameters = lsMetadataInfo[["mtrxParameters"]]
@@ -316,7 +316,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     lliMetadata = vector('list', length = nrow(mtrxSpikeConfig))
     lliData = vector('list', length = nrow(mtrxSpikeConfig))
     
-    if( !is.na(Metadatafrozenidx) ){
+    if( any(!is.na(Metadatafrozenidx)) ){
       lliMetadata[[as.character(length(Metadatafrozenidx))]] = Metadatafrozenidx
     }
     
@@ -584,7 +584,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
   final_matrix[1, 1] = '#SampleID'
   final_matrix[1, 2:(int_number_samples + 1)] = paste('Sample', 1:int_number_samples, sep =
                                                         '')
-  if (number_metadata > 0 & is.na(UserMetadata) ) {
+  if (number_metadata > 0 & all(is.na(UserMetadata)) ) {
     final_matrix[2:(number_metadata + 1), 1] = paste(c_str$Metadata, 1:number_metadata, sep =
                                                        '')
     vdDim = dim(mat_metadata)

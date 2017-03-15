@@ -25,7 +25,7 @@ c_d <- list(
   InterceptZero = 3.464,
   ### The estimate for the relationship between exp and zero percent
   ### modified by bor to logistic regression results on the IBD study
-  BetaGrandSD = 0.4857
+  BetaGrandSD = 0.4857,
   BetaGrandMu = 0.7513
   ### The estimate for the relationship between the mu of mus (of feature distributions) and the SD of mus (of feature distributions)
 )
