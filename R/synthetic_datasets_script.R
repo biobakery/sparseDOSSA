@@ -653,10 +653,13 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
   )
   
   return(
-    output.files = list(
+    list(
+      output_files = list(
       pcl_counts = strCountFileName,
       pcl_normalized = strNormalizedFileName,
-      truth_file = parameter_filename
+      truth_file = parameter_filename ),
+      OTU_count = mtrxFinalCounts,
+      OTU_norm = final_matrix,
+      truth = as.matrix(vParametersAssociations) ) 
     )
-  )
 }
