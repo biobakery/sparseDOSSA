@@ -119,7 +119,7 @@ sparseDOSSA( strNormalizedFileName = "SyntheticMicrobiome.pcl",
 }
 
 \value{
-A list with four fields. \code{output_files} contains the names of the output files (count data, normalized data and truth file). \code{OTU_count} is a character matrix, containing the simulated OTU table in counts. \code{OTU_norma} is a character matrix, containing the nomralized simulated OTU table. \code{truth} is a character matrix, containing the ground truth of simulation.
+A list with four fields. \code{output_files} contains the names of the output files (count data, normalized data and truth file). \code{OTU_count} is a list of character matrices, containing all \code{datasetCount} simulated OTU count tables. \code{OTU_norma} is a list of character matrices, containing all \code{datasetCount} nomralized simulated OTU tables. \code{truth} is list of character matrices, containing the ground truth of each of all \code{datasetCount} simulations.
 }
 
 \author{
