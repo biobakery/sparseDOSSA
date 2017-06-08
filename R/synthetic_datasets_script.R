@@ -55,10 +55,6 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     stop("Please provide a percent spikins in the range of 0 to 1")
   
   iReadDepth = read_depth
-  if (iReadDepth < max(int_number_features, int_number_samples))
-    stop(
-      "Please provide a read depth of atleast equal to feature size or sample size (which ever is larger)"
-    )
   
   iNumAssociations = bugs_to_spike
   if (iNumAssociations < 0)
