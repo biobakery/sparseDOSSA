@@ -161,337 +161,104 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     set.seed(seed)
   }
   
-  # List of associations and bugs
-  vParametersAssociations = vector(length = 1e5)
-  iPA = 1
+  all.count.datasets = vector(mode = "list", length=datasetCount)
+  all.norm.datasets = vector(mode = "list", length=datasetCount)
+  all.truth.file = vector(mode = "list", length=datasetCount)
   
-  list_of_bugs = vector('list', length = 1e4)
-  ilb = 1
-  
-  # Holds key words for the feature names of the microbiomes
-  lsMicrobiomeKeys = vector(length = 1e4)
-  
-  # Default number of metadata
-  number_metadata = 0
-  
-  if (fRunMetadata) {
-    # get the data from user-provide metadata file
-    # should be tab-delimited
-    # with row names at the first column
+  # Allow for multiple datasets
+  for( i.data.rep in 1:datasetCount ){
+    # List of associations and bugs
+    vParametersAssociations = vector(length = 1e5)
+    iPA = 1
     
-    if( all(is.na(UserMetadata)) ){
-      lsMetadataInfo = func_generate_metadata(int_base_metadata_number,
-                                              int_number_samples,
-                                              dMinLevelCountPercent)
-    }else{
-      lsMetadataInfo = list( mat_metadata = UserMetadata,
-                             mtrxParameters = as.list( c( c_str$MetadataDetails, "User-provide metadata", 
-                                                          paste(c_str$Metadata, 1:nrow(UserMetadata), sep="")) ) )
-    }
-    mat_metadata =  lsMetadataInfo[["mat_metadata"]]
-    metadata_parameters = lsMetadataInfo[["mtrxParameters"]]
-    
-    vParametersAssociations[iPA:(iPA + length(lsMetadataInfo[["mtrxParameters"]]) -
-                                   1)] = lsMetadataInfo[["mtrxParameters"]]
-    iPA = iPA + length(lsMetadataInfo[["mtrxParameters"]])
-    
-    # generate plain random lognormal bugs
-    # Get the fitted values for calibrating rlnorm
-    vdExp = NA
-    vdMu = NA
-    vdSD = NA
-    vdPercentZero = NA
-    #dSDBeta = c_dSDBeta
-    #dBetaZero = c_dBetaZero
-    #dGrandBeta = c_dBetaGrandSD
-    
-    message("Parameters BEFORE Calibration File")
-    message(
-      paste(
-        "Length exp",
-        NA,
-        "Length vdMu",
-        NA,
-        "length vdSD",
-        NA,
-        "length vdPercentZero",
-        NA,
-        "Read depth",
-        iReadDepth
-      )
-    )
-    
-    if (!is.na(strCalibrationFile) & (strCalibrationFile != "NA"))
-    {
-      # Get the fit for the data
-      message("Calibrating...")
-      lsFit = funcCalibrateRLNormToMicrobiome(strCalibrationFile, fVerbose)
-      vdExp = lsFit[["exp"]]
-      vdMu = lsFit[["mu"]]
-      vdSD = lsFit[["sd"]]
-      vdPercentZero = lsFit[["percentZero"]]
-      #iReadDepth = lsFit[["dAverageReadDepth"]]
-      int_number_features = lsFit[["iFeatureCount"]]
-    }
-    message(
-      "Parameters AFTER Calibration File (if no calibration file is used, defaults are shown)"
-    )
-    message(
-      paste(
-        "Length exp",
-        length(vdExp),
-        "Length vdMu",
-        length(vdMu),
-        "length vdSD",
-        length(vdSD),
-        "length vdPercentZero",
-        length(vdPercentZero),
-        "Read depth",
-        iReadDepth,
-        "Feature Count",
-        int_number_features
-      )
-    )
-    
-    mat_random_lognormal_bugs = func_generate_random_lognormal_matrix(
-      int_number_features = int_number_features,
-      int_number_samples  = int_number_samples,
-      iMinNumberCounts    = dMinOccurenceCount,
-      iMinNumberSamples   = dMinOccurenceSample,
-      iReadDepth          = iReadDepth,
-      vdExp               = vdExp,
-      vdMu                = vdMu,
-      vdPercentZero       = vdPercentZero,
-      vdSD                = vdSD,
-      fZeroInflate        = fZeroInflate,
-      lSDRel              = list(
-        BetaSD = c_d$SDBeta,
-        InterceptSD = c_d$SDIntercept
-      ),
-      lPercentZeroRel     = list(
-        InterceptZero = c_d$InterceptZero,
-        BetaZero      = c_d$BetaZero,
-        Scale         = scalePercentZeros
-      ),
-      dBetaGrandSD        = c_d$BetaGrandSD,
-      fVerbose            = fVerbose
-    )
-    
-    
-    vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_bugs[["mtrxParameters"]]))] = mat_random_lognormal_bugs[["mtrxParameters"]]
-    iPA = iPA + length(mat_random_lognormal_bugs[["mtrxParameters"]])
-    
-    list_of_bugs[[ilb]] = mat_random_lognormal_bugs[["mat_bugs"]]
-    ilb = ilb + 1
-    
-    # generate random lognormal with outliers
-    mat_random_lognormal_outliers_bugs = func_generate_random_lognormal_with_outliers(
-      int_number_features = int_number_features,
-      int_number_samples  = int_number_samples,
-      dMaxPercentOutliers = dPercentOutliers,
-      dPercentSamples     = dPercentOutlierSpikins,
-      mtrxBugs            = mat_random_lognormal_bugs[["mat_bugs"]],
-      fVerbose            = fVerbose
-    )
-    vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_outliers_bugs[["mtrxParameters"]]))] = mat_random_lognormal_outliers_bugs[["mtrxParameters"]]
-    iPA = iPA + length(mat_random_lognormal_outliers_bugs[["mtrxParameters"]])
-    
-    list_of_bugs[[ilb]] = mat_random_lognormal_outliers_bugs[["mat_bugs"]]
-    ilb = ilb + 1
+    list_of_bugs = vector('list', length = 1e4)
+    ilb = 1
     
     # Holds key words for the feature names of the microbiomes
-    lsMicrobiomeKeys[[1]] = c_str$Random
-    lsMicrobiomeKeys[[2]] = c_str$Outlier
-    ilM = 3
+    lsMicrobiomeKeys = vector(length = 1e4)
     
-    # There are 4 groups of metadata (2 continuous, binary, and quarternery)
-    number_metadata = c_i$CountTypesOfMetadata * int_base_metadata_number
+    # Default number of metadata
+    number_metadata = 0
     
-    # Hold the info to freeze the levels in the data
-    llsLevels = vector('list', length = nrow(mtrxSpikeConfig))
-    lliMetadata = vector('list', length = nrow(mtrxSpikeConfig))
-    lliData = vector('list', length = nrow(mtrxSpikeConfig))
-    
-    if( any(!is.na(Metadatafrozenidx)) ){
-      lliMetadata[[as.character(length(Metadatafrozenidx))]] = Metadatafrozenidx
-    }
-    
-    
-    # Generate random lognormal with varying amounts of spikes
-    for (iIndex in seq_len(nrow(mtrxSpikeConfig)))
-    {
-      vMultConfig = mtrxSpikeConfig[iIndex,]
-      iSpikeCount = vMultConfig[1]
-      sKey = as.character(iSpikeCount)
-      iSpikeStrength = vMultConfig[2]
-      lsLevels = NULL
-      liData = NULL
-      viMetadata = NULL
+    if (fRunMetadata) {
+      # get the data from user-provide metadata file
+      # should be tab-delimited
+      # with row names at the first column
       
-      if (sKey %in% names(lliMetadata))
-      {
-        lsLevels = llsLevels[[sKey]]
-        liData = lliData[[sKey]]
-        viMetadata = lliMetadata[[sKey]]
+      if( all(is.na(UserMetadata)) ){
+        lsMetadataInfo = func_generate_metadata(int_base_metadata_number,
+                                                int_number_samples,
+                                                dMinLevelCountPercent)
+      }else{
+        lsMetadataInfo = list( mat_metadata = UserMetadata,
+                               mtrxParameters = as.list( c( c_str$MetadataDetails, "User-provide metadata", 
+                                                            paste(c_str$Metadata, 1:nrow(UserMetadata), sep="")) ) )
       }
+      mat_metadata =  lsMetadataInfo[["mat_metadata"]]
+      metadata_parameters = lsMetadataInfo[["mtrxParameters"]]
       
-      mat_random_lognormal_multivariate_spikes = func_generate_random_lognormal_with_multivariate_spikes(
-        int_number_features     = int_number_features,
-        int_number_samples      = int_number_samples,
-        percent_spikes          = dPercentMultSpiked,
-        multiplier              = iSpikeStrength,
-        metadata_matrix         = mat_metadata,
-        multivariate_parameter  = iSpikeCount,
-        dMinLevelCountPercent   = dMinLevelCountPercent,
-        mtrxBugs                = mat_random_lognormal_bugs[["mat_bugs"]],
-        fZeroInflated           = fZeroInflate,
-        viFrozeMetadataIndices  = viMetadata,
-        liFrozeDataIndicies     = liData,
-        lsFrozeLevels           = lsLevels,
-        fVerbose                = fVerbose
-      )
-      mat_random_lognormal_multivariate_spikes_bugs = mat_random_lognormal_multivariate_spikes[["mat_bugs"]]
+      vParametersAssociations[iPA:(iPA + length(lsMetadataInfo[["mtrxParameters"]]) -
+                                     1)] = lsMetadataInfo[["mtrxParameters"]]
+      iPA = iPA + length(lsMetadataInfo[["mtrxParameters"]])
       
-      lliMetadata[[sKey]] = mat_random_lognormal_multivariate_spikes[["MetadataIndices"]]
-      lliData[[sKey]] = mat_random_lognormal_multivariate_spikes[["DataIndices"]]
-      llsLevels[[sKey]] = mat_random_lognormal_multivariate_spikes[["Levels"]]
-      
-      # generate known associations for random lognormal with spikes
-      vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_multivariate_spikes[["m_parameter_rec"]]))] = mat_random_lognormal_multivariate_spikes[["m_parameter_rec"]]
-      iPA = iPA + length(mat_random_lognormal_multivariate_spikes[["m_parameter_rec"]])
-      
-      list_of_bugs[[ilb]] = mat_random_lognormal_multivariate_spikes_bugs
-      ilb = ilb + 1
-      
-      lsMicrobiomeKeys[[ilM]] = paste(c_str$Spike,
-                                      "n",
-                                      iSpikeCount,
-                                      "m",
-                                      sub(".", "_", paste(iSpikeStrength), fixed = TRUE),
-                                      sep = "_")
-      ilM = ilM + 1
-    }
-  }
-  
-  if (fRunBugBug) {
-    v_log_corr_values = vecBugBugCorr
-    
-    # Get the fitted values for calibrating rlnorm
-    vdExp = NA
-    vdMu = NA
-    vdSD = NA
-    vdPercentZero = NA
-    
-    message("Parameters for Bug-Bug spikes BEFORE Calibration File")
-    message(
-      paste(
-        "Length exp",
-        NA,
-        "Length vdMu",
-        NA,
-        "length vdSD",
-        NA,
-        "length vdPercentZero",
-        NA,
-        "Read depth",
-        iReadDepth
-      )
-    )
-    
-    if (!is.na(strCalibrationFile) & (strCalibrationFile != "NA"))
-    {
-      # Get the fit for the data
-      message("Calibrating...")
-      lsFit = funcCalibrateRLNormToMicrobiome(strCalibrationFile, fVerbose)
-      vdExp = lsFit[["exp"]]
-      vdMu = lsFit[["mu"]]
-      vdSD = lsFit[["sd"]]
-      vdPercentZero = lsFit[["percentZero"]]
-      iReadDepth = lsFit[["dAverageReadDepth"]]
-      int_number_features = lsFit[["iFeatureCount"]]
-    }
-    message(
-      "Parameters for Bug-Bug spikes AFTER Calibration File (if no calibration file is used, defaults are shown)"
-    )
-    message(
-      paste(
-        "Length exp",
-        length(vdExp),
-        "Length vdMu",
-        length(vdMu),
-        "length vdSD",
-        length(vdSD),
-        "length vdPercentZero",
-        length(vdPercentZero),
-        "Read depth",
-        iReadDepth,
-        "Feature Count",
-        int_number_features
-      )
-    )
-    
-    
-    # Get the initial mu vector for generating features so that the datasets are iid
-    lsInitialDistribution = funcGenerateFeatureParameters(
-      int_number_features = int_number_features,
-      int_number_samples  = int_number_samples,
-      iMinNumberSamples   = dMinOccurenceSample,
-      iReadDepth          = iReadDepth,
-      vdExp               = vdExp,
-      vdMu                = vdMu,
-      vdSD                = vdSD,
-      vdPercentZero       = vdPercentZero,
-      lSDRel              = list(
-        BetaSD = c_d$SDBeta,
-        InterceptSD = c_d$SDIntercept
-      ),
-      lPercentZeroRel     = list(
-        InterceptZero = c_d$InterceptZero,
-        BetaZero      = c_d$BetaZero,
-        Scale         = scalePercentZeros
-      ),
-      dBetaGrandSD        = c_d$BetaGrandSD,
-      fVerbose            = fVerbose
-    )
-    
-    
-    
-    # Update the Mu, SD and Percent zero bugs and report on distributions
-    vdMu = lsInitialDistribution[["mu"]]
-    vdSD = lsInitialDistribution[["sd"]]
-    vdPercentZero = lsInitialDistribution[["PercentZero"]]
-    vdExp = lsInitialDistribution[["exp"]]
-    
-    mtrxDistributionParameters = matrix(NA, nrow = 5, ncol = 1)
-    mtrxDistributionParameters[1, 1] = paste(c_str$SyntheticMicrobiome,
-                                             c_str$DistributionParameters,
-                                             sep = "")
-    mtrxDistributionParameters[2, 1] = paste(c_str$MuVector, toString(round(vdMu, 2)))
-    mtrxDistributionParameters[3, 1] = paste(c_str$SDVector, toString(round(vdSD, 2)))
-    mtrxDistributionParameters[4, 1] = paste(c_str$PercentZeroVector, toString(round(vdPercentZero, 2)))
-    mtrxDistributionParameters[5, 1] = paste(c_str$ExpVector, toString(round(vdExp, 2)))
-    vParametersAssociations[iPA:(iPA + 4)] = c(mtrxDistributionParameters)
-    iPA = iPA + 5
-    
-    
-    # Get the indices for the associations
-    if (is.na(strSpikeFile)) {
-      lsAssociations = func_get_log_corr_mat_from_num(
-        num_features = int_number_features,
-        num_spikes = iNumAssociations,
-        log_corr_values = v_log_corr_values
-      )
-    } else {
-      lsAssociations = func_get_log_corr_mat_from_file(num_features = int_number_features,
-                                                       file_name = strSpikeFile)
-    }
-    
-    # Flag to add the parameters only once, since the datasets are iid
-    fAddedParameters    = FALSE
-    fAddBasisParameters = FALSE
-    
-    for (iDataset in 1:iNumberDatasets) {
       # generate plain random lognormal bugs
+      # Get the fitted values for calibrating rlnorm
+      vdExp = NA
+      vdMu = NA
+      vdSD = NA
+      vdPercentZero = NA
+      #dSDBeta = c_dSDBeta
+      #dBetaZero = c_dBetaZero
+      #dGrandBeta = c_dBetaGrandSD
+      
+      message("Parameters BEFORE Calibration File")
+      message(
+        paste(
+          "Length exp",
+          NA,
+          "Length vdMu",
+          NA,
+          "length vdSD",
+          NA,
+          "length vdPercentZero",
+          NA,
+          "Read depth",
+          iReadDepth
+        )
+      )
+      
+      if (!is.na(strCalibrationFile) & (strCalibrationFile != "NA"))
+      {
+        # Get the fit for the data
+        message("Calibrating...")
+        lsFit = funcCalibrateRLNormToMicrobiome(strCalibrationFile, fVerbose)
+        vdExp = lsFit[["exp"]]
+        vdMu = lsFit[["mu"]]
+        vdSD = lsFit[["sd"]]
+        vdPercentZero = lsFit[["percentZero"]]
+        #iReadDepth = lsFit[["dAverageReadDepth"]]
+        int_number_features = lsFit[["iFeatureCount"]]
+      }
+      message(
+        "Parameters AFTER Calibration File (if no calibration file is used, defaults are shown)"
+      )
+      message(
+        paste(
+          "Length exp",
+          length(vdExp),
+          "Length vdMu",
+          length(vdMu),
+          "length vdSD",
+          length(vdSD),
+          "length vdPercentZero",
+          length(vdPercentZero),
+          "Read depth",
+          iReadDepth,
+          "Feature Count",
+          int_number_features
+        )
+      )
+      
       mat_random_lognormal_bugs = func_generate_random_lognormal_matrix(
         int_number_features = int_number_features,
         int_number_samples  = int_number_samples,
@@ -502,7 +269,6 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
         vdMu                = vdMu,
         vdPercentZero       = vdPercentZero,
         vdSD                = vdSD,
-        mdLogCorr           = lsAssociations[["mdLogCorr"]],
         fZeroInflate        = fZeroInflate,
         lSDRel              = list(
           BetaSD = c_d$SDBeta,
@@ -517,142 +283,389 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
         fVerbose            = fVerbose
       )
       
-      if (!fAddedParameters) {
-        vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_bugs[["mtrxBasisParameters"]]))] = mat_random_lognormal_bugs[["mtrxBasisParameters"]]
-        vParametersAssociations[iPA + length(mat_random_lognormal_bugs[["mtrxBasisParameters"]])] = paste(c_str$NumberDatasets, iNumberDatasets)
-        iPA = iPA + length(mat_random_lognormal_bugs[["mtrxBasisParameters"]]) + 1
-        
-        parameter_mat <- matrix(NA, nrow = 9, ncol = 1)
-        
-        parameter_mat[1, 1]  <- paste0(c_str$SyntheticMicrobiome,
-                                       c_str$BugBugAssociations)
-        parameter_mat[2, 1]  <- paste(c_str$NumberOfFeatures,
-                                      int_number_features)
-        parameter_mat[3, 1]  <- paste(c_str$NumberOfSamples,
-                                      int_number_samples)
-        parameter_mat[4, 1]  <-
-          paste(c_str$NumberOfAssociations,
-                lsAssociations[["strNumberOfAssociations"]])
-        parameter_mat[5, 1]  <-
-          paste(c_str$CorrDomainBugs,
-                lsAssociations[["strNumberCorrDomainBugs"]])
-        parameter_mat[6, 1]  <-
-          paste(c_str$CorrRangeBugsIdx,
-                lsAssociations[["strIdxCorrRangeBugs"]])
-        parameter_mat[7, 1]  <-
-          paste(c_str$CorrDomainBugsIdx,
-                lsAssociations[["strIdxCorrDomainBugs"]])
-        parameter_mat[8, 1] <-
-          paste(c_str$DirOfAssociations,
-                lsAssociations[["strDirAssociations"]])
-        parameter_mat[9, 1] <-
-          paste(c_str$LogCorrValues,
-                lsAssociations[["strLogCorrValues"]])
-        
-        vParametersAssociations[iPA:(iPA + 8)] = c(parameter_mat)
-        iPA = iPA + 9
-        
-        fAddedParameters = TRUE
-      }
-      list_of_bugs[[ilb]] = mat_random_lognormal_bugs[["mat_basis"]]
-      ilb  = ilb + 1
       
-      lsMicrobiomeKeys[[ilM]] = paste(c_str$BugBugAssociations,
-                                      "a",
-                                      iNumAssociations,
-                                      "d",
-                                      iDataset,
-                                      sep = "_")
-      ilM = ilM + 1
+      vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_bugs[["mtrxParameters"]]))] = mat_random_lognormal_bugs[["mtrxParameters"]]
+      iPA = iPA + length(mat_random_lognormal_bugs[["mtrxParameters"]])
+      
+      list_of_bugs[[ilb]] = mat_random_lognormal_bugs[["mat_bugs"]]
+      ilb = ilb + 1
+      
+      # generate random lognormal with outliers
+      mat_random_lognormal_outliers_bugs = func_generate_random_lognormal_with_outliers(
+        int_number_features = int_number_features,
+        int_number_samples  = int_number_samples,
+        dMaxPercentOutliers = dPercentOutliers,
+        dPercentSamples     = dPercentOutlierSpikins,
+        mtrxBugs            = mat_random_lognormal_bugs[["mat_bugs"]],
+        fVerbose            = fVerbose
+      )
+      vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_outliers_bugs[["mtrxParameters"]]))] = mat_random_lognormal_outliers_bugs[["mtrxParameters"]]
+      iPA = iPA + length(mat_random_lognormal_outliers_bugs[["mtrxParameters"]])
+      
+      list_of_bugs[[ilb]] = mat_random_lognormal_outliers_bugs[["mat_bugs"]]
+      ilb = ilb + 1
+      
+      # Holds key words for the feature names of the microbiomes
+      lsMicrobiomeKeys[[1]] = c_str$Random
+      lsMicrobiomeKeys[[2]] = c_str$Outlier
+      ilM = 3
+      
+      # There are 4 groups of metadata (2 continuous, binary, and quarternery)
+      number_metadata = c_i$CountTypesOfMetadata * int_base_metadata_number
+      
+      # Hold the info to freeze the levels in the data
+      llsLevels = vector('list', length = nrow(mtrxSpikeConfig))
+      lliMetadata = vector('list', length = nrow(mtrxSpikeConfig))
+      lliData = vector('list', length = nrow(mtrxSpikeConfig))
+      
+      if( any(!is.na(Metadatafrozenidx)) ){
+        lliMetadata[[as.character(length(Metadatafrozenidx))]] = Metadatafrozenidx
+      }
+      
+      
+      # Generate random lognormal with varying amounts of spikes
+      for (iIndex in seq_len(nrow(mtrxSpikeConfig)))
+      {
+        vMultConfig = mtrxSpikeConfig[iIndex,]
+        iSpikeCount = vMultConfig[1]
+        sKey = as.character(iSpikeCount)
+        iSpikeStrength = vMultConfig[2]
+        lsLevels = NULL
+        liData = NULL
+        viMetadata = NULL
+        
+        if (sKey %in% names(lliMetadata))
+        {
+          lsLevels = llsLevels[[sKey]]
+          liData = lliData[[sKey]]
+          viMetadata = lliMetadata[[sKey]]
+        }
+        
+        mat_random_lognormal_multivariate_spikes = func_generate_random_lognormal_with_multivariate_spikes(
+          int_number_features     = int_number_features,
+          int_number_samples      = int_number_samples,
+          percent_spikes          = dPercentMultSpiked,
+          multiplier              = iSpikeStrength,
+          metadata_matrix         = mat_metadata,
+          multivariate_parameter  = iSpikeCount,
+          dMinLevelCountPercent   = dMinLevelCountPercent,
+          mtrxBugs                = mat_random_lognormal_bugs[["mat_bugs"]],
+          fZeroInflated           = fZeroInflate,
+          viFrozeMetadataIndices  = viMetadata,
+          liFrozeDataIndicies     = liData,
+          lsFrozeLevels           = lsLevels,
+          fVerbose                = fVerbose
+        )
+        mat_random_lognormal_multivariate_spikes_bugs = mat_random_lognormal_multivariate_spikes[["mat_bugs"]]
+        
+        lliMetadata[[sKey]] = mat_random_lognormal_multivariate_spikes[["MetadataIndices"]]
+        lliData[[sKey]] = mat_random_lognormal_multivariate_spikes[["DataIndices"]]
+        llsLevels[[sKey]] = mat_random_lognormal_multivariate_spikes[["Levels"]]
+        
+        # generate known associations for random lognormal with spikes
+        vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_multivariate_spikes[["m_parameter_rec"]]))] = mat_random_lognormal_multivariate_spikes[["m_parameter_rec"]]
+        iPA = iPA + length(mat_random_lognormal_multivariate_spikes[["m_parameter_rec"]])
+        
+        list_of_bugs[[ilb]] = mat_random_lognormal_multivariate_spikes_bugs
+        ilb = ilb + 1
+        
+        lsMicrobiomeKeys[[ilM]] = paste(c_str$Spike,
+                                        "n",
+                                        iSpikeCount,
+                                        "m",
+                                        sub(".", "_", paste(iSpikeStrength), fixed = TRUE),
+                                        sep = "_")
+        ilM = ilM + 1
+      }
     }
+    
+    if (fRunBugBug) {
+      v_log_corr_values = vecBugBugCorr
+      
+      # Get the fitted values for calibrating rlnorm
+      vdExp = NA
+      vdMu = NA
+      vdSD = NA
+      vdPercentZero = NA
+      
+      message("Parameters for Bug-Bug spikes BEFORE Calibration File")
+      message(
+        paste(
+          "Length exp",
+          NA,
+          "Length vdMu",
+          NA,
+          "length vdSD",
+          NA,
+          "length vdPercentZero",
+          NA,
+          "Read depth",
+          iReadDepth
+        )
+      )
+      
+      if (!is.na(strCalibrationFile) & (strCalibrationFile != "NA"))
+      {
+        # Get the fit for the data
+        message("Calibrating...")
+        lsFit = funcCalibrateRLNormToMicrobiome(strCalibrationFile, fVerbose)
+        vdExp = lsFit[["exp"]]
+        vdMu = lsFit[["mu"]]
+        vdSD = lsFit[["sd"]]
+        vdPercentZero = lsFit[["percentZero"]]
+        iReadDepth = lsFit[["dAverageReadDepth"]]
+        int_number_features = lsFit[["iFeatureCount"]]
+      }
+      message(
+        "Parameters for Bug-Bug spikes AFTER Calibration File (if no calibration file is used, defaults are shown)"
+      )
+      message(
+        paste(
+          "Length exp",
+          length(vdExp),
+          "Length vdMu",
+          length(vdMu),
+          "length vdSD",
+          length(vdSD),
+          "length vdPercentZero",
+          length(vdPercentZero),
+          "Read depth",
+          iReadDepth,
+          "Feature Count",
+          int_number_features
+        )
+      )
+      
+      
+      # Get the initial mu vector for generating features so that the datasets are iid
+      lsInitialDistribution = funcGenerateFeatureParameters(
+        int_number_features = int_number_features,
+        int_number_samples  = int_number_samples,
+        iMinNumberSamples   = dMinOccurenceSample,
+        iReadDepth          = iReadDepth,
+        vdExp               = vdExp,
+        vdMu                = vdMu,
+        vdSD                = vdSD,
+        vdPercentZero       = vdPercentZero,
+        lSDRel              = list(
+          BetaSD = c_d$SDBeta,
+          InterceptSD = c_d$SDIntercept
+        ),
+        lPercentZeroRel     = list(
+          InterceptZero = c_d$InterceptZero,
+          BetaZero      = c_d$BetaZero,
+          Scale         = scalePercentZeros
+        ),
+        dBetaGrandSD        = c_d$BetaGrandSD,
+        fVerbose            = fVerbose
+      )
+      
+      
+      
+      # Update the Mu, SD and Percent zero bugs and report on distributions
+      vdMu = lsInitialDistribution[["mu"]]
+      vdSD = lsInitialDistribution[["sd"]]
+      vdPercentZero = lsInitialDistribution[["PercentZero"]]
+      vdExp = lsInitialDistribution[["exp"]]
+      
+      mtrxDistributionParameters = matrix(NA, nrow = 5, ncol = 1)
+      mtrxDistributionParameters[1, 1] = paste(c_str$SyntheticMicrobiome,
+                                               c_str$DistributionParameters,
+                                               sep = "")
+      mtrxDistributionParameters[2, 1] = paste(c_str$MuVector, toString(round(vdMu, 2)))
+      mtrxDistributionParameters[3, 1] = paste(c_str$SDVector, toString(round(vdSD, 2)))
+      mtrxDistributionParameters[4, 1] = paste(c_str$PercentZeroVector, toString(round(vdPercentZero, 2)))
+      mtrxDistributionParameters[5, 1] = paste(c_str$ExpVector, toString(round(vdExp, 2)))
+      vParametersAssociations[iPA:(iPA + 4)] = c(mtrxDistributionParameters)
+      iPA = iPA + 5
+      
+      
+      # Get the indices for the associations
+      if (is.na(strSpikeFile)) {
+        lsAssociations = func_get_log_corr_mat_from_num(
+          num_features = int_number_features,
+          num_spikes = iNumAssociations,
+          log_corr_values = v_log_corr_values
+        )
+      } else {
+        lsAssociations = func_get_log_corr_mat_from_file(num_features = int_number_features,
+                                                         file_name = strSpikeFile)
+      }
+      
+      # Flag to add the parameters only once, since the datasets are iid
+      fAddedParameters    = FALSE
+      fAddBasisParameters = FALSE
+      
+      for (iDataset in 1:iNumberDatasets) {
+        # generate plain random lognormal bugs
+        mat_random_lognormal_bugs = func_generate_random_lognormal_matrix(
+          int_number_features = int_number_features,
+          int_number_samples  = int_number_samples,
+          iMinNumberCounts    = dMinOccurenceCount,
+          iMinNumberSamples   = dMinOccurenceSample,
+          iReadDepth          = iReadDepth,
+          vdExp               = vdExp,
+          vdMu                = vdMu,
+          vdPercentZero       = vdPercentZero,
+          vdSD                = vdSD,
+          mdLogCorr           = lsAssociations[["mdLogCorr"]],
+          fZeroInflate        = fZeroInflate,
+          lSDRel              = list(
+            BetaSD = c_d$SDBeta,
+            InterceptSD = c_d$SDIntercept
+          ),
+          lPercentZeroRel     = list(
+            InterceptZero = c_d$InterceptZero,
+            BetaZero      = c_d$BetaZero,
+            Scale         = scalePercentZeros
+          ),
+          dBetaGrandSD        = c_d$BetaGrandSD,
+          fVerbose            = fVerbose
+        )
+        
+        if (!fAddedParameters) {
+          vParametersAssociations[iPA:(iPA - 1 + length(mat_random_lognormal_bugs[["mtrxBasisParameters"]]))] = mat_random_lognormal_bugs[["mtrxBasisParameters"]]
+          vParametersAssociations[iPA + length(mat_random_lognormal_bugs[["mtrxBasisParameters"]])] = paste(c_str$NumberDatasets, iNumberDatasets)
+          iPA = iPA + length(mat_random_lognormal_bugs[["mtrxBasisParameters"]]) + 1
+          
+          parameter_mat <- matrix(NA, nrow = 9, ncol = 1)
+          
+          parameter_mat[1, 1]  <- paste0(c_str$SyntheticMicrobiome,
+                                         c_str$BugBugAssociations)
+          parameter_mat[2, 1]  <- paste(c_str$NumberOfFeatures,
+                                        int_number_features)
+          parameter_mat[3, 1]  <- paste(c_str$NumberOfSamples,
+                                        int_number_samples)
+          parameter_mat[4, 1]  <-
+            paste(c_str$NumberOfAssociations,
+                  lsAssociations[["strNumberOfAssociations"]])
+          parameter_mat[5, 1]  <-
+            paste(c_str$CorrDomainBugs,
+                  lsAssociations[["strNumberCorrDomainBugs"]])
+          parameter_mat[6, 1]  <-
+            paste(c_str$CorrRangeBugsIdx,
+                  lsAssociations[["strIdxCorrRangeBugs"]])
+          parameter_mat[7, 1]  <-
+            paste(c_str$CorrDomainBugsIdx,
+                  lsAssociations[["strIdxCorrDomainBugs"]])
+          parameter_mat[8, 1] <-
+            paste(c_str$DirOfAssociations,
+                  lsAssociations[["strDirAssociations"]])
+          parameter_mat[9, 1] <-
+            paste(c_str$LogCorrValues,
+                  lsAssociations[["strLogCorrValues"]])
+          
+          vParametersAssociations[iPA:(iPA + 8)] = c(parameter_mat)
+          iPA = iPA + 9
+          
+          fAddedParameters = TRUE
+        }
+        list_of_bugs[[ilb]] = mat_random_lognormal_bugs[["mat_basis"]]
+        ilb  = ilb + 1
+        
+        lsMicrobiomeKeys[[ilM]] = paste(c_str$BugBugAssociations,
+                                        "a",
+                                        iNumAssociations,
+                                        "d",
+                                        iDataset,
+                                        sep = "_")
+        ilM = ilM + 1
+      }
+    }
+    
+    # preallocate final pcl  matrix
+    length(list_of_bugs) = ilb - 1
+    length(lsMicrobiomeKeys) = ilM - 1
+    
+    final_matrix = matrix(
+      data = NA,
+      nrow = (nrow(mat_metadata) + int_number_features * length(list_of_bugs)) +
+        1,
+      ncol = (int_number_samples + 1)
+    )
+    final_matrix[1, 1] = '#SampleID'
+    final_matrix[1, 2:(int_number_samples + 1)] = paste('Sample', 1:int_number_samples, sep =
+                                                          '')
+    if (number_metadata > 0 & all(is.na(UserMetadata)) ) {
+      final_matrix[2:(number_metadata + 1), 1] = paste(c_str$Metadata, 1:number_metadata, sep =
+                                                         '')
+      vdDim = dim(mat_metadata)
+      mat_metadata[(floor(vdDim[1] / 2) + 1):vdDim[1], ] = paste("Group_", mat_metadata[(floor(vdDim[1] /
+                                                                                                 2) + 1):vdDim[1], ], sep = "")
+      final_matrix[2:(number_metadata + 1), 2:(int_number_samples + 1)] = mat_metadata
+    }else{
+      final_matrix[2:(nrow(mat_metadata)+1),1] = paste( c_str$Metadata, 1:nrow(mat_metadata), sep = "" )
+      final_matrix[2:(nrow(mat_metadata)+1),2:(int_number_samples+1)] = mat_metadata
+    }
+    
+    # Make a matrix for counts (use the other for normalized)
+    mtrxFinalCounts = final_matrix
+    
+    start = 2 + nrow(mat_metadata)
+    end = (2 + nrow(mat_metadata)) + (int_number_features - 1)
+    iFirstData = start
+    
+    for (iMatIndex in seq_along(list_of_bugs))
+    {
+      final_matrix[start:end, 1] = paste(paste(c_str$Feature, lsMicrobiomeKeys[iMatIndex], sep =
+                                                 "_"),
+                                         1:int_number_features,
+                                         sep = '_')
+      # Normalize each column by thier sum and add to output
+      final_matrix[start:end, 2:(int_number_samples + 1)] = funcNormalizeMicrobiome(list_of_bugs[[iMatIndex]])
+      mtrxFinalCounts[start:end, 1] = paste(paste(c_str$Feature, lsMicrobiomeKeys[iMatIndex], sep =
+                                                    "_"),
+                                            1:int_number_features,
+                                            sep = '_')
+      mtrxFinalCounts[start:end, 2:(int_number_samples + 1)] = list_of_bugs[[iMatIndex]]
+      start = start + int_number_features
+      end = end + int_number_features
+    }
+    
+    # Write the table as normalized counts
+    write.table(
+      final_matrix,
+      file = strNormalizedFileName,
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE,
+      sep = '\t'
+    )
+    
+    # Write the tables as counts
+    mtrxCounts = final_matrix
+    write.table(
+      mtrxFinalCounts,
+      file = strCountFileName,
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE,
+      sep = '\t'
+    )
+    
+    # Write truth tables
+    length(vParametersAssociations) = iPA - 1
+    write.table(
+      as.matrix(vParametersAssociations),
+      file = parameter_filename,
+      quote = FALSE,
+      row.names = FALSE,
+      col.names = FALSE,
+      sep = '\t'
+    )
+    all.count.datasets[[i.data.rep]] = mtrxFinalCounts
+    all.norm.datasets[[i.data.rep]] = final_matrix
+    all.truth.file[[i.data.rep]] = as.matrix(vParametersAssociations)
   }
-  
-  # preallocate final pcl  matrix
-  length(list_of_bugs) = ilb - 1
-  length(lsMicrobiomeKeys) = ilM - 1
-  
-  final_matrix = matrix(
-    data = NA,
-    nrow = (nrow(mat_metadata) + int_number_features * length(list_of_bugs)) +
-      1,
-    ncol = (int_number_samples + 1)
-  )
-  final_matrix[1, 1] = '#SampleID'
-  final_matrix[1, 2:(int_number_samples + 1)] = paste('Sample', 1:int_number_samples, sep =
-                                                        '')
-  if (number_metadata > 0 & all(is.na(UserMetadata)) ) {
-    final_matrix[2:(number_metadata + 1), 1] = paste(c_str$Metadata, 1:number_metadata, sep =
-                                                       '')
-    vdDim = dim(mat_metadata)
-    mat_metadata[(floor(vdDim[1] / 2) + 1):vdDim[1], ] = paste("Group_", mat_metadata[(floor(vdDim[1] /
-                                                                                               2) + 1):vdDim[1], ], sep = "")
-    final_matrix[2:(number_metadata + 1), 2:(int_number_samples + 1)] = mat_metadata
-  }else{
-    final_matrix[2:(nrow(mat_metadata)+1),1] = paste( c_str$Metadata, 1:nrow(mat_metadata), sep = "" )
-    final_matrix[2:(nrow(mat_metadata)+1),2:(int_number_samples+1)] = mat_metadata
-  }
-  
-  # Make a matrix for counts (use the other for normalized)
-  mtrxFinalCounts = final_matrix
-  
-  start = 2 + nrow(mat_metadata)
-  end = (2 + nrow(mat_metadata)) + (int_number_features - 1)
-  iFirstData = start
-  
-  for (iMatIndex in seq_along(list_of_bugs))
-  {
-    final_matrix[start:end, 1] = paste(paste(c_str$Feature, lsMicrobiomeKeys[iMatIndex], sep =
-                                               "_"),
-                                       1:int_number_features,
-                                       sep = '_')
-    # Normalize each column by thier sum and add to output
-    final_matrix[start:end, 2:(int_number_samples + 1)] = funcNormalizeMicrobiome(list_of_bugs[[iMatIndex]])
-    mtrxFinalCounts[start:end, 1] = paste(paste(c_str$Feature, lsMicrobiomeKeys[iMatIndex], sep =
-                                                  "_"),
-                                          1:int_number_features,
-                                          sep = '_')
-    mtrxFinalCounts[start:end, 2:(int_number_samples + 1)] = list_of_bugs[[iMatIndex]]
-    start = start + int_number_features
-    end = end + int_number_features
-  }
-  
-  # Write the table as normalized counts
-  write.table(
-    final_matrix,
-    file = strNormalizedFileName,
-    quote = FALSE,
-    row.names = FALSE,
-    col.names = FALSE,
-    sep = '\t'
-  )
-  
-  # Write the tables as counts
-  mtrxCounts = final_matrix
-  write.table(
-    mtrxFinalCounts,
-    file = strCountFileName,
-    quote = FALSE,
-    row.names = FALSE,
-    col.names = FALSE,
-    sep = '\t'
-  )
-  
-  # Write truth tables
-  length(vParametersAssociations) = iPA - 1
-  write.table(
-    as.matrix(vParametersAssociations),
-    file = parameter_filename,
-    quote = FALSE,
-    row.names = FALSE,
-    col.names = FALSE,
-    sep = '\t'
-  )
   
   return(
-    output.files = list(
-      pcl_counts = strCountFileName,
-      pcl_normalized = strNormalizedFileName,
-      truth_file = parameter_filename
-    )
+    list(
+      output_files = list(
+        pcl_counts = strCountFileName,
+        pcl_normalized = strNormalizedFileName,
+        truth_file = parameter_filename ),
+      OTU_count = all.count.datasets,
+      OTU_norm = all.norm.datasets,
+      truth = all.truth.file ) 
   )
 }
