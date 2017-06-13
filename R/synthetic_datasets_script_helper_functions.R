@@ -958,6 +958,11 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
         vdCurMetadata = metadata_matrix[viSelectedMetadata,]
         vdCurData = mtrxBugs[iIndexSpikedFeature,]
         
+        if( mean(vdCurData==0) == 1 ){
+          viRemainingFeatures = setdiff(viRemainingFeatures, iIndexSpikedFeature)
+          next
+        }
+        
         # Attempt to spike in a new bug
         
         lsMetadataInfo = funcPrepareMetadata(viSelectedMetadata=viSelectedMetadata, vdCurMetadata=vdCurMetadata, vsFrozeLevels=unlist(lsFrozeLevels[iSpikedBug]))
