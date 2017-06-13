@@ -27,7 +27,8 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                        noRunMetadata = FALSE,
                        runBugBug =  FALSE,
                        UserMetadata = NA,
-                       Metadatafrozenidx = NA ) {
+                       Metadatafrozenidx = NA,
+                       write_table = TRUE ) {
   int_base_metadata_number = number_metadata
   if (int_base_metadata_number < 1)
     stop("Please provide the base number for metadata generation as 1 or greater.")
@@ -623,36 +624,42 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     }
     
     # Write the table as normalized counts
-    write.table(
-      final_matrix,
-      file = strNormalizedFileName,
-      quote = FALSE,
-      row.names = FALSE,
-      col.names = FALSE,
-      sep = '\t'
-    )
+    if( write_table ){
+      write.table(
+        final_matrix,
+        file = strNormalizedFileName,
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE,
+        sep = '\t'
+      )
+    }
     
     # Write the tables as counts
     mtrxCounts = final_matrix
-    write.table(
-      mtrxFinalCounts,
-      file = strCountFileName,
-      quote = FALSE,
-      row.names = FALSE,
-      col.names = FALSE,
-      sep = '\t'
-    )
+    if( write_table ){
+      write.table(
+        mtrxFinalCounts,
+        file = strCountFileName,
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE,
+        sep = '\t'
+      )
+    }
     
     # Write truth tables
     length(vParametersAssociations) = iPA - 1
-    write.table(
-      as.matrix(vParametersAssociations),
-      file = parameter_filename,
-      quote = FALSE,
-      row.names = FALSE,
-      col.names = FALSE,
-      sep = '\t'
-    )
+    if( write_table ){
+      write.table(
+        as.matrix(vParametersAssociations),
+        file = parameter_filename,
+        quote = FALSE,
+        row.names = FALSE,
+        col.names = FALSE,
+        sep = '\t'
+      )
+    }
     all.count.datasets[[i.data.rep]] = mtrxFinalCounts
     all.norm.datasets[[i.data.rep]] = final_matrix
     all.truth.file[[i.data.rep]] = as.matrix(vParametersAssociations)
