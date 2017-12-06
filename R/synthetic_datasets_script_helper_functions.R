@@ -631,11 +631,6 @@ func_generate_random_lognormal_matrix = function(
   mat_bugs_basis = lFeatureDetails$Feature_base
   mat_bugs = t(t(mat_bugs_basis)/colSums(mat_bugs_basis)*iReadDepth)
   
-  # # Shuffle back in removed signal, but only if there are no bug-bug correlations that would be messed up
-  # if (all(mdLogCorr[upper.tri(mdLogCorr)] == 0)){
-  #   mat_bugs = funcShuffleMatrix(mtrxData=mat_bugs, iTargetReadDepth=iReadDepth)
-  # }
-  
   # Round to counts
   # This round method does not allow value produced lower then the minimal value 
   # This allows control to make sure zeros are produced only if they are not equal to zero.
@@ -845,9 +840,24 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
   lsFrozeLevels = NULL,
   ### If given, the method must select these specific level indicies.
   ### This allows the slection of features to be the same when evaluating the multiplier
+  spikein.mt = NULL,
   fVerbose = FALSE
 ){
   message("start func_generate_random_lognormal_with_multivariate_spikes")
+  
+  if( !is.null(spikein.mt) ){
+    vdCurData = mtrxBugs
+    for( i in seq_along(spikein.mt$feature) ){
+      vdCur.spiked = funcSpikeNewBug_new( metadata_matrix, 
+                                          vdCurData = vdCurData[spikein.mt$feature[i],], 
+                                          spike.metadata = as.integer(strsplit(as.character(spikein.mt$metadata[i]), split = ";", fixed = T)[[1]]), 
+                                          spike.strength = as.numeric(strsplit(as.character(spikein.mt$strength[i]), split = ";", fixed = T)[[1]]), 
+                                          fZeroInflated )
+      print(vdCur.spiked)
+      vdCurData[spikein.mt$feature[i],] = vdCur.spiked
+    }
+    return( list(mat_bugs=vdCurData, m_parameter_rec=NA, MetadataIndices=NA, DataIndices=NA, Levels=NA) )
+  }
   
   # Tracks the bug of interest
   iIndexSpikedFeature = NA
@@ -878,19 +888,6 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
   # Features to be spiked to select from
   # Optionally sparsity of available features can be controlled for
   viRemainingFeatures = 1:int_number_features
-  #TODO new hack code
-  #  message("viRemainingFeatures 1")
-  #  message(viRemainingFeatures)
-  #  if( FALSE )
-  #    c_dLowestPercentZeros = -1
-  #    c_dGreatestPercentZeros = 0.15
-  #    vdPercentZero = funcGetRowMetric( mtrxBugs, function(vdBug) length( vdBug[ vdBug == 0 ] ) / length( vdBug ) )
-  #    message("vdPercentZero")
-  #    message(vdPercentZero)
-  #    viRemainingFeatures = intersect( which( vdPercentZero > c_dLowestPercentZeros ), which( vdPercentZero < c_dGreatestPercentZeros ) )
-  #    message("viRemainingFeatures 2")
-  #    message(viRemainingFeatures)
-  
   
   # Holds the metadata selected for spikin
   lviMetadata = vector(length=1e4)
@@ -1152,6 +1149,53 @@ funcIsFactorMetadataValid = function(
   return( TRUE )
 }
 
+# funcRevamp_spikein = function( n, p, m, s, beta, beta.p, 
+#                                mt.metadata,
+#                                mt.spikein,
+#                                mdLogCorr = diag(p), 
+#                                vdTruncateThreshold = diag(n),
+#                                fZeroInflate = TRUE){
+#   # mt.spikein colnames: feature, metadata(semi-colon delimited), strength(semi-colon delimited)
+#   
+#   vdMu = rlnorm( p, m, s )
+#   mu.mt = matrix( 0, nrow = p, ncol = n )
+#   sd.mt = matrix( 0, nrow = p, ncol = n )
+#   p.mt = matrix( 0, nrow = p, ncol = n )
+#   
+#   for( i in 1:p ){
+#     if( i %in% mt.spikein$feature ){
+#       metadata.use = as.integer( strsplit( as.character( mt.spikein$metadata[mt.spikein$feature%in%i] ), split = ";" )[[1]] )
+#       strength.use = as.numeric( strsplit( as.character(mt.spikein$strength[mt.spikein$feature%in%i]), split = ";" )[[1]] )
+#       Mu.i = vdMu[i] + mt.metadata[,metadata.use]%*%matrix(strength.use,ncol=1)
+#     }else{
+#       Mu.i = vdMu[i]
+#     }
+#     SD.i = exp(beta[1]+beta[2]*Mu.i)
+#     P.i = 1/(1+exp(-(beta.p[1]+beta.p[2]*Mu.i)))
+#     
+#     mu.mt[i,] = Mu.i
+#     sd.mt[i,] = SD.i
+#     p.mt[i,] = P.i
+#   }
+#   
+#   data.matrix = sapply( 1:n, function(i){
+#     data.raw = exp(tmvtnorm::rtmvnorm( 1, mu.mt[,i], 
+#                             sigma = diag(sd.mt[,i])%*%mdLogCorr%*%diag(sd.mt[,i]), algorithm = "gibbs" ))
+#     data.0 = rbinom( p, 1, prob = 1-p.mt[,i] )
+#     if( fZeroInflate ){
+#       ceiling( data.raw*data.0 )
+#     }else{
+#       floor( data.raw )
+#     }
+#   } )
+#   return( data.matrix )
+# }
+# 
+# metadata.mt = matrix(rnorm(1000), nrow = 100 )
+# spikein.mt = data.frame( feature = c(1,4,7), metadata = c("2;3","1;4;5","6"), strength=c("1;1","2;3;10","-1") )
+# 
+# tmp = funcRevamp_spikein( 100, p = 50, m = 0.4857, s = 0.7513, beta = c(-0.2691,0.5599), 
+#                     beta.p = c(3.464,-2.577), metadata.mt, spikein.mt )
 
 ### 3 Test 10/22/2013 (could do more)
 ### modified by ehs
@@ -1200,15 +1244,6 @@ funcMakeFeature = function(
                                                                prob = c(vdPercentZero[x],1-vdPercentZero[x]) 
                                                                )))
     
-  # Update the distributions to the targeted expectations
-  # mdFeature = matrix(NA, ncol=ncol(mdFeature_base), nrow=nrow(mdFeature_base))
-  # for (k in seq_len(ncol(mdFeature))){
-  #   mdFeature[, k] = funcUpdateDistributionToExpectation(vdFeatures=mdFeature_base[, k], dExp = vdExpCal[k] )
-  # }
-  
-  # Causes striation, update
-  # mdFeature = apply(mdFeature, 2, funcForceMinCountsInMinSamples, iMinNumberCounts = iMinNumberCounts, iMinNumberSamples = iMinNumberSamples)
-  # mdFeature_base = apply(mdFeature_base, 2, funcForceMinCountsInMinSamples, iMinNumberCounts = iMinNumberCounts, iMinNumberSamples = iMinNumberSamples )
   # Extra useful measurements, the true and expected means
   vdMean = apply(mdFeature_base, 2, mean)
   vdMean_base = apply(mdFeature_base, 2, mean)
@@ -1522,6 +1557,31 @@ funcShuffleMatrix = function(
   return(mtrxData)
 }
 
+funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spike.strength, fZeroInflated = TRUE ){
+  # metadata.matrix: row variables, column samples
+  metadata.matrix.use = metadata.matrix
+  #browser()
+  if( fZeroInflated ){
+    Cur.mean = mean(vdCurData[vdCurData>0])
+    Cur.sd = sd(vdCurData[vdCurData>0])
+    
+    Cur.tran = (vdCurData-Cur.mean)/Cur.sd
+    Cur.tran.spk = Cur.tran + t(matrix(metadata.matrix.use[spike.metadata,],nrow=length(spike.metadata)))%*%matrix(spike.strength,ncol=1)
+    
+    Cur.tran.spk = (Cur.tran.spk*Cur.sd + Cur.mean)*(vdCurData>0)
+    Cur.tran.spk = ceiling(Cur.tran.spk)
+  }else{
+    Cur.mean = mean(vdCurData)
+    Cur.sd = sd(vdCurData)
+    
+    Cur.tran = (vdCurData-Cur.mean)/Cur.sd
+    Cur.tran.spk = Cur.tran + t(metadata.matrix.use[spike.metadata,])%*%matrix(spike.strength,ncol=1)
+    Cur.tran.spk = Cur.tran.spk*Cur.sd + Cur.mean
+    Cur.tran.spk = floor(Cur.tran.spk)
+  }
+  Cur.tran.spk[Cur.tran.spk<0] = 0
+  return(Cur.tran.spk)
+}
 
 ### 11 Tests 10/22/2013
 funcSpikeNewBug = function(

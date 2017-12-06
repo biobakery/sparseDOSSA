@@ -28,6 +28,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                        runBugBug =  FALSE,
                        UserMetadata = NA,
                        Metadatafrozenidx = NA,
+                       spikein.mt = NULL,
                        write_table = TRUE ) {
   int_base_metadata_number = number_metadata
   if (int_base_metadata_number < 1)
@@ -355,7 +356,8 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
           viFrozeMetadataIndices  = viMetadata,
           liFrozeDataIndicies     = liData,
           lsFrozeLevels           = lsLevels,
-          fVerbose                = fVerbose
+          fVerbose                = fVerbose,
+          spikein.mt              = spikein.mt
         )
         mat_random_lognormal_multivariate_spikes_bugs = mat_random_lognormal_multivariate_spikes[["mat_bugs"]]
         
@@ -460,8 +462,6 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
         dBetaGrandSD        = c_d$BetaGrandSD,
         fVerbose            = fVerbose
       )
-      
-      
       
       # Update the Mu, SD and Percent zero bugs and report on distributions
       vdMu = lsInitialDistribution[["mu"]]
