@@ -414,6 +414,9 @@ func_generate_metadata = function(
   dMinLevelPercent
   ### The minimum percent of samples a level can have
 ){
+  if(int_base_metadata_number==0){
+    return(list(mat_metadata=matrix(nrow=0, ncol=0), mtrxParameters=NA))
+  }
   # Preallocate matrix
   mat_metadata = matrix(data=NA,nrow=(int_base_metadata_number*c_i$CountTypesOfMetadata),ncol=int_number_samples)
   

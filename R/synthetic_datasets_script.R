@@ -31,12 +31,10 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                        spikein.mt = NULL,
                        write_table = TRUE ) {
   int_base_metadata_number = number_metadata
-  if (int_base_metadata_number < 1)
-    stop("Please provide the base number for metadata generation as 1 or greater.")
   
   int_number_features = number_features
   if (int_number_features < 1)
-    stop("Please provide a number of features of atleast 1")
+    stop("Please provide a number of features of at least 1")
   
   strAssociationType = association_type
   if (!strAssociationType %in% c("linear", "rounded_linear"))
@@ -594,7 +592,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
       mat_metadata[(floor(vdDim[1] / 2) + 1):vdDim[1], ] = paste("Group_", mat_metadata[(floor(vdDim[1] /
                                                                                                  2) + 1):vdDim[1], ], sep = "")
       final_matrix[2:(number_metadata + 1), 2:(int_number_samples + 1)] = mat_metadata
-    }else{
+    }else if(!all(is.na(UserMetadata))){
       final_matrix[2:(nrow(mat_metadata)+1),1] = paste( c_str$Metadata, 1:nrow(mat_metadata), sep = "" )
       final_matrix[2:(nrow(mat_metadata)+1),2:(int_number_samples+1)] = mat_metadata
     }
