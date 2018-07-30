@@ -632,7 +632,7 @@ func_generate_random_lognormal_matrix = function(
   
   # Need to transpose so that features are rows, columns are samples
   mat_bugs_basis = lFeatureDetails$Feature_base
-  mat_bugs = mat_bugs_basis
+  mat_bugs = mat_basis = mat_bugs_basis
   
   if(c_f$FreezeSDGrandMu ||c_f$FreezeSDFeatures||c_f$PrintLognormalMatrix)
   {
@@ -1869,13 +1869,14 @@ funcVaryLibrarySize = function(
 ) {
   int_number_samples = ncol(mtrxBugs)
   vdLogMean = c_d$MuLibSize
-  dLogSd = c_d$SDLibSize
+  vdLogSD = c_d$SDLibSize
   viThreshold = c_i$TimesSDIsOutlierLibSize
-  iLibSize = exp(tmvtnorm::rtmvnorm(n = int_number_samples,
-                                    mean = vdLogMean,
-                                    sigma = diag(dLogSd, int_number_samples),
-                                    upper = viThreshold,
-                                    algorithm="gibbs"))
+  iLibSize = exp(tmvtnorm::rtmvnorm(n = 1,
+                                    mean = rep(vdLogMean, int_number_samples),
+                                    sigma = diag(vdLogSD^2, int_number_samples),
+                                    upper = rep(vdLogMean + viThreshold * vdLogSD,
+                                                int_number_samples),
+                                    algorithm="gibbs"))[1, ]
   iLibSize = round(iLibSize / mean(iLibSize) * iReadDepth)
   mtrxCounts = sapply(1:int_number_samples,
                       function(i) {
