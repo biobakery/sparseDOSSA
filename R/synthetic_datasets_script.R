@@ -54,6 +54,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
       (dPercentOutlierSpikins < 0))
     stop("Please provide a percent spikins in the range of 0 to 1")
   
+  # Average library size parameter, integer
   iReadDepth = read_depth
   
   iNumAssociations = bugs_to_spike
@@ -611,12 +612,14 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                                          1:int_number_features,
                                          sep = '_')
       # Normalize each column by thier sum and add to output
-      final_matrix[start:end, 2:(int_number_samples + 1)] = funcNormalizeMicrobiome(list_of_bugs[[iMatIndex]])
+      iMatNormalized = funcNormalizeMicrobiome(list_of_bugs[[iMatIndex]])
+      final_matrix[start:end, 2:(int_number_samples + 1)] = iMatNormalized
       mtrxFinalCounts[start:end, 1] = paste(paste(c_str$Feature, lsMicrobiomeKeys[iMatIndex], sep =
                                                     "_"),
                                             1:int_number_features,
                                             sep = '_')
-      mtrxFinalCounts[start:end, 2:(int_number_samples + 1)] = list_of_bugs[[iMatIndex]]
+      iMatCount = funcVaryLibrarySize(iReadDepth, iMatNormalized)
+      mtrxFinalCounts[start:end, 2:(int_number_samples + 1)] = iMatCount
       start = start + int_number_features
       end = end + int_number_features
     }
