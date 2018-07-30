@@ -4,8 +4,9 @@ c_i <- list(
   ### There are 4 types of metadata supported in metadata generation
   TimesSDIsOutlier = 4,
   ### The number of deviations until a value is truncated as an outlier
-  LoopingControlIncrement = 1000
+  LoopingControlIncrement = 1000,
   ### Max number of loops in looping functions
+  TimesSDIsOutlierLibSize = 3
 )
 
 # float constants
@@ -26,8 +27,10 @@ c_d <- list(
   ### The estimate for the relationship between exp and zero percent
   ### modified by bor to logistic regression results on the IBD study
   BetaGrandSD = 0.4857,
-  BetaGrandMu = 0.7513
+  BetaGrandMu = 0.7513,
   ### The estimate for the relationship between the mu of mus (of feature distributions) and the SD of mus (of feature distributions)
+  MuLibSize = 10.04278,
+  SDLibSize = 1.112657
 )
 
 # Labeling Constants
