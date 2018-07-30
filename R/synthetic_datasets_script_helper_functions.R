@@ -632,34 +632,26 @@ func_generate_random_lognormal_matrix = function(
   
   # Need to transpose so that features are rows, columns are samples
   mat_bugs_basis = lFeatureDetails$Feature_base
-  mat_bugs = t(t(mat_bugs_basis)/colSums(mat_bugs_basis)*iReadDepth)
-  
-  # Round to counts
-  # This round method does not allow value produced lower then the minimal value 
-  # This allows control to make sure zeros are produced only if they are not equal to zero.
-  # This is appropriate for a zero inflated model but not for a standard lognormal model.
-  # So if zero inflation is used then this rounding function is needed otherwise a normal rounding can be performed by not setting the iMinValue.
-  mat_bugs = funcRoundMatrix(mtrxData=mat_bugs, fZeroInflated=fZeroInflate)
-  mat_basis = funcRoundMatrix(mtrxData=mat_bugs_basis, fZeroInflated=fZeroInflate)
+  mat_bugs = mat_bugs_basis
   
   if(c_f$FreezeSDGrandMu ||c_f$FreezeSDFeatures||c_f$PrintLognormalMatrix)
   {
     #    message("bug counts")
     #    message(mat_bugs)
-    message("Read Depth")
-    message(colSums(mat_bugs))
-    message("Average read depth")
-    message(mean(colSums(mat_bugs)))
+    # message("Read Depth")
+    # message(colSums(mat_bugs))
+    # message("Average read depth")
+    # message(mean(colSums(mat_bugs)))
     message("Feature mean")
     message(funcGetRowMetric(mat_bugs,mean))
     message("vdExp")
     message(vdExp)
     message("Sum exp")
     message(sum(vdExp))
-    message("Sum exp, should be read depth")
-    message(iReadDepth)
-    message("Feature mean summary")
-    message(summary(funcGetRowMetric(mat_bugs,mean)))
+    # message("Sum exp, should be read depth")
+    # message(iReadDepth)
+    # message("Feature mean summary")
+    # message(summary(funcGetRowMetric(mat_bugs,mean)))
   }
   
   # Truth table for relative abundance log normal data
@@ -1038,8 +1030,6 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
       }
     }
   }
-  # Floor to counts (spike-ins will be real numbers)
-  mtrxBugs = floor(mtrxBugs)
   
   message("stop func_generate_random_lognormal_with_multivariate_spikes")
   
@@ -1572,7 +1562,6 @@ funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spik
     Cur.tran.spk = Cur.tran + t(matrix(metadata.matrix.use[spike.metadata,],nrow=length(spike.metadata)))%*%matrix(spike.strength,ncol=1)
     
     Cur.tran.spk = (Cur.tran.spk*Cur.sd + Cur.mean)*(vdCurData>0)
-    Cur.tran.spk = ceiling(Cur.tran.spk)
   }else{
     Cur.mean = mean(vdCurData)
     Cur.sd = sd(vdCurData)
@@ -1580,7 +1569,6 @@ funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spik
     Cur.tran = (vdCurData-Cur.mean)/Cur.sd
     Cur.tran.spk = Cur.tran + t(metadata.matrix.use[spike.metadata,])%*%matrix(spike.strength,ncol=1)
     Cur.tran.spk = Cur.tran.spk*Cur.sd + Cur.mean
-    Cur.tran.spk = floor(Cur.tran.spk)
   }
   Cur.tran.spk[Cur.tran.spk<0] = 0
   return(Cur.tran.spk)
@@ -1870,4 +1858,30 @@ func_zero_inflate = function(
   
   # Return zero-inflated truncated lognormal feature
   return( mdFeature )
+}
+
+# Function for varying library sizes given a relative abundance table and the mean library size
+funcVaryLibrarySize = function(
+  # Average read depth
+  iReadDepth,
+  # Relative abundance table
+  mtrxBugs
+) {
+  int_number_samples = ncol(mtrxBugs)
+  vdLogMean = c_d$MuLibSize
+  dLogSd = c_d$SDLibSize
+  viThreshold = c_i$TimesSDIsOutlierLibSize
+  iLibSize = exp(tmvtnorm::rtmvnorm(n = int_number_samples,
+                                    mean = vdLogMean,
+                                    sigma = diag(dLogSd, int_number_samples),
+                                    upper = viThreshold,
+                                    algorithm="gibbs"))
+  iLibSize = round(iLibSize / mean(iLibSize) * iReadDepth)
+  mtrxCounts = sapply(1:int_number_samples,
+                      function(i) {
+                        rmultinom(n = 1,
+                                  size = iLibSize[i],
+                                  prob = mtrxBugs[, i])
+                      })
+  return(mtrxCounts)
 }
