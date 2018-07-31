@@ -5,7 +5,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                        spikeFile = NA,
                        calibrate = NA,
                        datasetCount = 1,
-                       read_depth = 8030,
+                       read_depth = 50000,
                        number_features = 300,
                        bugBugCorr =  "0.5",
                        spikeCount = "1",
@@ -164,6 +164,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
   
   all.count.datasets = vector(mode = "list", length=datasetCount)
   all.norm.datasets = vector(mode = "list", length=datasetCount)
+  all.basis.datasets = vector(mode = "list", length=datasetCount)
   all.truth.file = vector(mode = "list", length=datasetCount)
   
   # Allow for multiple datasets
@@ -599,7 +600,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     }
     
     # Make a matrix for counts (use the other for normalized)
-    mtrxFinalCounts = final_matrix
+    mtrxFinalCounts = mtrixFinalBasis = final_matrix
     
     start = 2 + nrow(mat_metadata)
     end = (2 + nrow(mat_metadata)) + (int_number_features - 1)
@@ -607,6 +608,11 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     
     for (iMatIndex in seq_along(list_of_bugs))
     {
+      mtrixFinalBasis[start:end, 1] = paste(paste(c_str$Feature, lsMicrobiomeKeys[iMatIndex], sep =
+                                      "_"),
+                              1:int_number_features,
+                              sep = '_')
+      mtrixFinalBasis[start:end, 2:(int_number_samples + 1)] = list_of_bugs[[iMatIndex]]
       final_matrix[start:end, 1] = paste(paste(c_str$Feature, lsMicrobiomeKeys[iMatIndex], sep =
                                                  "_"),
                                          1:int_number_features,
@@ -663,6 +669,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
     }
     all.count.datasets[[i.data.rep]] = mtrxFinalCounts
     all.norm.datasets[[i.data.rep]] = final_matrix
+    all.basis.datasets[[i.data.rep]] = mtrixFinalBasis
     all.truth.file[[i.data.rep]] = as.matrix(vParametersAssociations)
   }
   
@@ -674,6 +681,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
         truth_file = parameter_filename ),
       OTU_count = all.count.datasets,
       OTU_norm = all.norm.datasets,
+      OTU_basis = all.basis.datasets,
       truth = all.truth.file ) 
   )
 }
