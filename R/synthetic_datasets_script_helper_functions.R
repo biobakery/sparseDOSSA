@@ -1865,19 +1865,29 @@ funcVaryLibrarySize = function(
   # Average read depth
   iReadDepth,
   # Relative abundance table
-  mtrxBugs
+  mtrxBugs,
+  # Flag, should library size be allowed to vary?
+  fVaryLibrarySize
 ) {
   int_number_samples = ncol(mtrxBugs)
-  vdLogMean = c_d$MuLibSize
-  vdLogSD = c_d$SDLibSize
-  viThreshold = c_i$TimesSDIsOutlierLibSize
-  iLibSize = exp(tmvtnorm::rtmvnorm(n = 1,
-                                    mean = rep(vdLogMean, int_number_samples),
-                                    sigma = diag(vdLogSD^2, int_number_samples),
-                                    upper = rep(vdLogMean + viThreshold * vdLogSD,
-                                                int_number_samples),
-                                    algorithm="gibbs"))[1, ]
-  iLibSize = round(iLibSize / mean(iLibSize) * iReadDepth)
+  if(!fVaryLibrarySize) {
+    iLibSize = rep(iReadDepth, int_number_samples)
+  } else {
+    vdLogMean = c_d$MuLibSize
+    vdLogSD = c_d$SDLibSize
+    viThreshold = c_i$TimesSDIsOutlierLibSize
+    iLibSize = exp(truncnorm::rtruncnorm(n = int_number_samples,
+                                         mean = vdLogMean,
+                                         sd = vdLogSD,
+                                         b = vdLogMean + viThreshold * vdLogSD))
+    # iLibSize = exp(tmvtnorm::rtmvnorm(n = 1,
+    #                                   mean = rep(vdLogMean, int_number_samples),
+    #                                   sigma = diag(vdLogSD^2, int_number_samples),
+    #                                   upper = rep(vdLogMean + viThreshold * vdLogSD,
+    #                                               int_number_samples),
+    #                                   algorithm="gibbs"))[1, ]
+    iLibSize = round(iLibSize / mean(iLibSize) * iReadDepth)
+  }
   mtrxCounts = sapply(1:int_number_samples,
                       function(i) {
                         rmultinom(n = 1,
