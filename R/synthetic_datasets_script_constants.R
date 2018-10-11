@@ -31,6 +31,7 @@ c_d <- list(
   ### The estimate for the relationship between the mu of mus (of feature distributions) and the SD of mus (of feature distributions)
   MuLibSize = 10.04278,
   SDLibSize = 1.112657
+  ### Mean and SD parameter for the log normal distribution of lib size; learned as MLE from a template meta-analysis dataset
 )
 
 # Labeling Constants
