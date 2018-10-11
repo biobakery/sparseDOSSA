@@ -29,7 +29,9 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                        UserMetadata = NA,
                        Metadatafrozenidx = NA,
                        spikein.mt = NULL,
-                       write_table = TRUE ) {
+                       write_table = TRUE,
+                       varyLibrarySize = TRUE ## FIXME
+                       ) {
   int_base_metadata_number = number_metadata
   
   int_number_features = number_features
@@ -624,7 +626,7 @@ sparseDOSSA = function(strNormalizedFileName = "SyntheticMicrobiome.pcl",
                                                     "_"),
                                             1:int_number_features,
                                             sep = '_')
-      iMatCount = funcVaryLibrarySize(iReadDepth, iMatNormalized)
+      iMatCount = funcVaryLibrarySize(iReadDepth, iMatNormalized, varyLibrarySize)
       mtrxFinalCounts[start:end, 2:(int_number_samples + 1)] = iMatCount
       start = start + int_number_features
       end = end + int_number_features

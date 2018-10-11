@@ -33,6 +33,7 @@ Imports:
     optparse,
     MASS,
     tmvtnorm (>= 1.4.10),
-    MCMCpack
+    MCMCpack,
+    truncnorm
 biocViews: Bayesian, Microbiome, Metagenomics, Software
 RoxygenNote: 5.0.1
