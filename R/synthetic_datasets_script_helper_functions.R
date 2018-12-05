@@ -848,7 +848,7 @@ func_generate_random_lognormal_with_multivariate_spikes = function(
                                           spike.metadata = as.integer(strsplit(as.character(spikein.mt$metadata[i]), split = ";", fixed = T)[[1]]), 
                                           spike.strength = as.numeric(strsplit(as.character(spikein.mt$strength[i]), split = ";", fixed = T)[[1]]), 
                                           fZeroInflated )
-      print(vdCur.spiked)
+      # print(vdCur.spiked)
       vdCurData[spikein.mt$feature[i],] = vdCur.spiked
     }
     return( list(mat_bugs=vdCurData, m_parameter_rec=NA, MetadataIndices=NA, DataIndices=NA, Levels=NA) )
@@ -1558,6 +1558,10 @@ funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spik
     Cur.mean = mean(vdCurData[vdCurData>0])
     Cur.sd = sd(vdCurData[vdCurData>0])
     
+    # special cases when the number of non-zeroes is too small
+    if(is.na(Cur.mean)) Cur.mean = 0
+    if(Cur.sd %in% c(NA, 0)) Cur.sd = 1
+    
     Cur.tran = (vdCurData-Cur.mean)/Cur.sd
     Cur.tran.spk = Cur.tran + t(matrix(metadata.matrix.use[spike.metadata,],nrow=length(spike.metadata)))%*%matrix(spike.strength,ncol=1)
     
@@ -1565,6 +1569,9 @@ funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spik
   }else{
     Cur.mean = mean(vdCurData)
     Cur.sd = sd(vdCurData)
+    
+    # special cases when sd is 0
+    if(Cur.sd == 0) Cur.sd = 1
     
     Cur.tran = (vdCurData-Cur.mean)/Cur.sd
     Cur.tran.spk = Cur.tran + t(metadata.matrix.use[spike.metadata,])%*%matrix(spike.strength,ncol=1)
@@ -1890,9 +1897,11 @@ funcVaryLibrarySize = function(
   }
   mtrxCounts = sapply(1:int_number_samples,
                       function(i) {
+                        prob = mtrxBugs[, i]
+                        if(all(prob == 0)) return(rep(0, nrow(mtrxBugs)))
                         rmultinom(n = 1,
                                   size = iLibSize[i],
-                                  prob = mtrxBugs[, i])
+                                  prob = prob)
                       })
   return(mtrxCounts)
 }
