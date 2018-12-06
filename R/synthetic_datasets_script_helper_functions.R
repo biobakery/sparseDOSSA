@@ -1552,33 +1552,57 @@ funcShuffleMatrix = function(
 
 funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spike.strength, fZeroInflated = TRUE ){
   # metadata.matrix: row variables, column samples
-  metadata.matrix.use = metadata.matrix
-  #browser()
-  if( fZeroInflated ){
-    Cur.mean = mean(vdCurData[vdCurData>0])
-    Cur.sd = sd(vdCurData[vdCurData>0])
-    
-    # special cases when the number of non-zeroes is too small
-    if(is.na(Cur.mean)) Cur.mean = 0
-    if(Cur.sd %in% c(NA, 0)) Cur.sd = 1
-    
-    Cur.tran = (vdCurData-Cur.mean)/Cur.sd
-    Cur.tran.spk = Cur.tran + t(matrix(metadata.matrix.use[spike.metadata,],nrow=length(spike.metadata)))%*%matrix(spike.strength,ncol=1)
-    
-    Cur.tran.spk = (Cur.tran.spk*Cur.sd + Cur.mean)*(vdCurData>0)
-  }else{
-    Cur.mean = mean(vdCurData)
-    Cur.sd = sd(vdCurData)
-    
-    # special cases when sd is 0
-    if(Cur.sd == 0) Cur.sd = 1
-    
-    Cur.tran = (vdCurData-Cur.mean)/Cur.sd
-    Cur.tran.spk = Cur.tran + t(metadata.matrix.use[spike.metadata,])%*%matrix(spike.strength,ncol=1)
-    Cur.tran.spk = Cur.tran.spk*Cur.sd + Cur.mean
+  vdCurMetadata = metadata.matrix[spike.metadata, , drop = FALSE]
+  
+  metadata_average = funcGetRowMetric(vdCurMetadata,mean)
+  metadata_sigma = funcGetSD(vdCurMetadata)
+  
+  # Get the average and SD of the feature (ignoring zeros if zero inflated)
+  data_average = mean(vdCurData[which(vdCurData>0)])
+  data_sigma = sd(vdCurData[which(vdCurData>0)])
+  if(is.na(data_sigma)){return(vdCurData)}
+  
+  if(!fZeroInflated)
+  {
+    data_average = mean(vdCurData)
+    data_sigma = sd(vdCurData)
   }
-  Cur.tran.spk[Cur.tran.spk<0] = 0
-  return(Cur.tran.spk)
+  
+  metadata_sigma[ metadata_sigma == 0] = 1
+  if( data_sigma == 0 ) { data_sigma = 1 }
+  
+  # Feature as occurence (0,1)
+  # This is used so that the features with zero keep those measurements at zero
+  # Only used in a zero inflated environment so everything is set to 1 otherwise which cancels it's affect
+  liOccurenceFilter = vdCurData
+  liOccurenceFilter[liOccurenceFilter>0]=1
+  if(!fZeroInflated)
+  {
+    liOccurenceFilter[seq_along(liOccurenceFilter)] = 1
+  }
+  
+  # Spike in the feature with the metadata (multivariate_parameter == 1 means 1 metadata spike-in for the feature)
+  # Make the scaled metadata
+  scaled_metadata = (vdCurMetadata - metadata_average)/metadata_sigma
+  if(data_sigma!=0){ scaled_metadata = scaled_metadata * data_sigma }
+  scaled_metadata = scaled_metadata + data_average
+  
+  effect_sum <- spike.strength*scaled_metadata
+  
+  if(!(is.null(nrow(vdCurMetadata))||(nrow(vdCurMetadata)==1)))
+  {
+    effect_sum = colSums(effect_sum)
+  }
+  
+  # Spike in the metadata that is now scaled.
+  # make the metadata sparse based on the feature ("and" function filter)
+  vdSpikedBug = vdCurData + (effect_sum*liOccurenceFilter)
+  
+  # Scale the spike in down so the bug count does not increase as a (whole) feature just because adding is happening
+  vdSpikedBug = vdSpikedBug / ( sum(spike.strength) + 1 )
+  
+  vdSpikedBug[which(vdSpikedBug<0)]=0
+  return(vdSpikedBug)
 }
 
 ### 11 Tests 10/22/2013
