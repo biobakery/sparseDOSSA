@@ -608,7 +608,10 @@ func_generate_random_lognormal_matrix = function(
   
   vdMu = rlnorm( int_number_features, c_d$BetaGrandMu, c_d$BetaGrandSD )
   vdSD = exp(c_d$SDIntercept+c_d$SDBeta*log(vdMu))
-  vdPercentZero = 1/(1+exp(-(c_d$InterceptZero+c_d$BetaZero*log(vdMu))))
+  vdPercentZero = 1/(1+exp(-(c_d$InterceptZero+c_d$BetaZero*log(vdMu)))) 
+  ## add in the functionality to scale sparsity
+  vdPercentZero = vdPercentZero * lPercentZeroRel$Scale
+  vdPercentZero[vdPercentZero > 1] <- 1
   #vdExp = lsInitialDistribution[["exp"]]
   
   # Number of samples needed to have signal as a constraint
