@@ -567,8 +567,6 @@ func_generate_random_lognormal_matrix = function(
   ### Vector of percent zero parameters for the original exp distribution (means of features) if not supplied, one will be generated
   vdSD = NA,
   ### Vector of SD parameters for the original exp distribution (means of features) if not supplied, one will be generated
-  mdLogCorr = diag(int_number_features),
-  ### The correlation matrix of the logged distribution; default is a identity matrix with dimension int_number_features
   fZeroInflate = TRUE,
   ### Turns off Zero inflation if FALSE (default TRUE, zero inflation turned on)
   lSDRel = NA,
@@ -1232,9 +1230,15 @@ funcMakeFeature = function(
   
   # Generate features
   #mdFeature_base = func_zero_inflate(vdLogMean = log(vdMu), vdPercentZeroInflated=vdPercentZero, int_number_samples=iNumberSamples, vdLogSD=log(vdSD), mdLogCorr=mdLogCorr, viThreshold=vdTruncateThreshold)
-  mdFeature_base = t(exp(tmvtnorm::rtmvnorm( iNumberSamples, vdMu, 
-                                       sigma = diag(vdSD)%*%mdLogCorr%*%diag(vdSD), 
-                                       upper = log(vdTruncateThreshold), algorithm = "gibbs" )))
+  # mdFeature_base = t(exp(tmvtnorm::rtmvnorm( iNumberSamples, vdMu, 
+  #                                      sigma = diag(vdSD)%*%mdLogCorr%*%diag(vdSD), 
+  #                                      upper = log(vdTruncateThreshold), algorithm = "gibbs" )))
+  mdFeature_base = t(exp(sapply(1:length(vdMu), function(i){
+    truncnorm::rtruncnorm(n = iNumberSamples,
+                          mean = vdMu[i],
+                          sd = vdSD[i],
+                          b = log(vdTruncateThreshold)[i])
+  })))
   mdFeature_base = mdFeature_base * t(sapply( 1:length(vdPercentZero), 
                                            function(x) sample( 0:1, iNumberSamples, replace = T, 
                                                                prob = c(vdPercentZero[x],1-vdPercentZero[x]) 
