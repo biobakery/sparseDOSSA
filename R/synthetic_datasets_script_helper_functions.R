@@ -1594,7 +1594,7 @@ funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spik
   if(data_sigma!=0){ scaled_metadata = scaled_metadata * data_sigma }
   scaled_metadata = scaled_metadata + data_average
   
-  effect_sum <- spike.strength*scaled_metadata
+  effect_sum <- scaled_metadata * spike.strength + data_average * abs(spike.strength)
   
   if(!(is.null(nrow(vdCurMetadata))||(nrow(vdCurMetadata)==1)))
   {
@@ -1606,7 +1606,7 @@ funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spik
   vdSpikedBug = vdCurData + (effect_sum*liOccurenceFilter)
   
   # Scale the spike in down so the bug count does not increase as a (whole) feature just because adding is happening
-  vdSpikedBug = vdSpikedBug / ( sum(spike.strength) + 1 )
+  vdSpikedBug = vdSpikedBug / ( sum(abs(spike.strength)) + 1 )
   
   vdSpikedBug[which(vdSpikedBug<0)]=0
   return(vdSpikedBug)
