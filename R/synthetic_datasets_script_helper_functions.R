@@ -1592,7 +1592,6 @@ funcSpikeNewBug_new = function( metadata.matrix, vdCurData, spike.metadata, spik
   # Make the scaled metadata
   scaled_metadata = (vdCurMetadata - metadata_average)/metadata_sigma
   if(data_sigma!=0){ scaled_metadata = scaled_metadata * data_sigma }
-  scaled_metadata = scaled_metadata + data_average
   
   effect_sum <- scaled_metadata * spike.strength + data_average * abs(spike.strength)
   
